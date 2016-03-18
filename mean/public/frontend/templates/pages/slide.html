@@ -1,0 +1,39 @@
+
+<div class="banner">
+    <div class="full-container">
+        <div class="slider-content">
+            <ul id="pager2" class="container">
+                <!--
+                <span>•</span>
+                <span class="cycle-pager-active">•</span>
+                <span>•</span>
+                <span>•</span>
+                -->
+                <span ng-repeat="image in bannerImages" id="{{image.id}}" ng-class="image.class" ng-click="prevnext($index)">•</span>
+            </ul>
+            <!-- prev/next links -->
+
+            <span class="prevControl sliderControl" ng-click="prev()"> 
+                <i class="fa fa-angle-left fa-3x "></i>
+            </span> 
+            <span class="nextControl sliderControl" ng-click="next()"> 
+                <i class="fa fa-angle-right fa-3x "></i>
+            </span>
+
+            <div class="slider slider-v1"
+                 data-cycle-swipe=true
+                 data-cycle-prev=".prevControl"
+                 data-cycle-next=".nextControl" data-cycle-loader="wait">
+                
+                <div class="slider-item slider-item-img1" ng-repeat="image in bannerImages" ng-show="image.visible">
+                    <img src="{{image.src}}" class="img-responsive parallaximg sliderImg" alt="img">
+                </div>
+                <!--/.slider-item-->
+            </div>
+            <!--/.slider slider-v1-->
+        </div>
+        <!--/.slider-content-->
+    </div>
+    <!--/.full-container-->
+</div>
+<!--/.banner style1-->
