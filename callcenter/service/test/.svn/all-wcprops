@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/callcenter/!svn/ver/6/service/test
+END
+decrypt.php
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/callcenter/!svn/ver/2/service/test/decrypt.php
+END
+cron_deploy.php
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/callcenter/!svn/ver/2/service/test/cron_deploy.php
+END
+post.php
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/callcenter/!svn/ver/6/service/test/post.php
+END

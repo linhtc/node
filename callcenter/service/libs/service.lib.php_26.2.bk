@@ -1,0 +1,1447 @@
+<?php
+include_once('post.php'); 
+function exception_error_handler($errno, $errstr, $errfile, $errline) {
+    if (stristr($errstr, "DB Error") == TRUE) {
+        throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+    }
+}
+set_error_handler("exception_error_handler");
+
+class ServiceLibDbAccess {
+	public function loginToCEW($username, $password, $site='att'){
+		$url = 'https://att-di.erecyclingcorps.com/api/user/authorization';
+		if($site != 'att'){ $url = 'https://vzw-di.erecyclingcorps.com/api/user/authorization'; }
+		$request = new stdClass();
+		$request->username = $username;
+		$request->password = $password;
+		$request = json_encode($request); //print_r($request); exit;
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_USERPWD, "hyla_authorization_api:gnLFCu");
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		$response = curl_exec($ch);
+		curl_close($ch);
+		$response = json_decode($response, true);
+		if(is_array($response) && isset($response[0])){ return $response[0]; }
+		if($site == 'att'){ $response = $this->loginToCEW($username, $password, 'vzw'); }
+		return $response;
+	}
+	public function checkLoginFromCloud($username, $password, $sha1Pass = ''){
+		global $db;
+		try{
+			$sql    =   " 
+				SELECT u.id userid, u.username, u.fullname, u.email, u.groupid,u.avatar, u.permission, u.company, u.sites, u.company, u.website,
+				u.phone, u.location, u.shifts , u.birthday, g.group_name, g.grouptype, g.isadmin, g.permission, g.id as groupid, g.customerid
+				FROM gcs_users u
+				left join gcs_groups g on u.groupid = g.id
+				where u.status = 1
+				and u.isdelete = 0
+				and u.username = '$username'
+				and (u.password = '$password' OR u.password = '$sha1Pass')
+				;
+			";
+			$query = $db->selectdata($sql, array());
+			if(count($query) < 1){ return 0; } else{ $query = $query[0]; }
+			if(!empty($query['username'])){
+				#region thay đổi id = router
+					$sql_menu = " SELECT route, id FROM gcs_menus WHERE isdelete = 0; ";
+					$menu =   $db->selectdata($sql_menu, array());
+					$arr_menu = array();
+					foreach($menu as $item){ $arr_menu[$item['id']] = $item['route']; }
+					$obj_route =  array();
+					$arr_process = array(); $arr_process_end = array();
+					if(!empty($query['permission'])){
+						$sqlProcess = " SELECT m.id, m.name, m.processid FROM gcs_menus m WHERE m.processid > 0 ORDER BY m.ordering; ";
+						$processList = $db->selectdata($sqlProcess, array());
+						foreach($processList as $item){ if(!isset($arr_process[$item['id']])){ $arr_process[$item['id']] = array('processid'=>$item['processid'], 'name'=>$item['name'], 'right'=>0); } }
+						$permission = json_decode($query['permission'],true);
+						foreach($permission as $key=>$val){ if(isset($arr_menu[$key])){ $obj_route[$arr_menu[$key]] = $val; } if(isset($arr_process[$key])){ $arr_process[$key]['right'] = 1; } }
+						foreach($arr_process as $key=>$item){ if($item['right'] == 1){ $arr_process_end[$key] = $arr_process[$key]; } }
+					}
+				#end region menu
+				$arr_result = array();
+				foreach($query as $key=>$val){ if($key == 'permission'){ continue; } else{ $arr_result[$key] = $val; } }
+				$arr_result['right'] = $obj_route;
+				$arr_result['process'] = $arr_process_end;
+				return $arr_result;
+			}
+			else{
+				return 0;
+			}
+			
+		}
+		catch(Exception  $e){
+            return ERROR;
+        }
+	}
+	public function getListMenuFromCloud($login,$arrUrl,$uris){
+		global $db;
+		try{
+			$groupid = $login['groupid'];
+			$sql = "
+				SELECT g.id, g.permission
+				FROM gcs_groups g
+				WHERE g.isdelete = 0
+				and g.id = '$groupid'
+			";	
+			//$query = $cn->fetchAssoc($sql);
+			$query =   $db->selectdata($sql, array());
+			if(count($query) > 0){
+				$query = $query[0];
+			}
+			$permission = json_decode($query['permission']);
+			$right = "";
+			if(count($permission) == 0){
+				return "";
+			}
+			foreach($permission as $key=>$val){
+				$right.= ",".$key;
+			}
+			$right = substr($right,1);
+			#region Tìm parent
+			
+			$uris2 = substr($uris,1,-1);
+			if($uris2 == "admin/dashboard/" || $uris == "/admin/user/profile" || $uris == "/iZap/productivity" || $uris == "/iZap/phone-history"){
+				$uris2 = substr($uris,1);
+			}
+			//var_dump($uris2);die;
+			$sql_uri = "
+				SELECT m.parent
+				FROM gcs_menus m
+				WHERE m.isdelete = 0
+				and m.uris = '$uris2'
+			";	
+			//$query_uri = $cn->fetchAssoc($sql_uri);
+			$query_uri =   $db->selectdata($sql_uri, array());
+			if(count($query_uri) > 0){
+				$query_uri = $query_uri[0];
+			}
+			if(isset($query_uri['parent'])){
+				$parent = $query_uri['parent'];
+			}
+			else{
+				$parent = -1;
+			}
+			#end
+			$sql    =   " 
+				SELECT m.name, m.parent, m.route, m.id, m.classicon, m.urls, m.uris
+				FROM gcs_menus m                      
+				WHERE m.parent = 0
+				and m.isdelete = 0 
+				order by m.ordering ASC
+			";
+			//$result =   $cn->fetchAll($sql);
+			$result =   $db->selectdata($sql, array());
+			#region menu
+			$menu = '';
+			foreach($result as $item){
+				$itemUris = '';
+				if(isset($arrUrl[$item['urls']])){
+					$itemUris = str_replace('/', '_', $arrUrl[$item['urls']]);
+				}
+				$asub = $this->getChildrenMenuFromCloud($item['id'],$right,$arrUrl,$uris);
+				if(empty($item['classicon'])){
+					$classicon = 'fa-folder-o';
+				}
+				else{
+					$classicon = $item['classicon'];
+				}
+				if($parent == $item['id']){
+					//$active = 'class="active '.$itemUris.'"';
+					$active = 'class=" '.$itemUris.'"';
+				}
+				else{
+					$active = 'class="'.$itemUris.'"';
+				}
+				if($asub){
+					$menu.='<li '.$active.'><a href="javascript:;"><i class="fa '.$classicon.'"></i>
+							<span class="title">'.$item['name'].'</span><span class="arrow "></span></a>';
+					$menu.=' <ul class="sub-menu">';
+					$menu.=$asub;
+					$menu.='</ul></li>';   
+				}
+				else{
+					if($item['urls'] == 'gcs_admin_homepage' && in_array($item['id'],explode(',',$right))){
+						$select_uris = "/".$item['uris']."/";
+						if($select_uris == $uris){
+							//$active = 'class="active '.$itemUris.'"';
+							$active = 'class=" '.$itemUris.'"';
+						}
+						else{
+							$active = 'class="'.$itemUris.'"';
+						}
+						if($item['urls'] != '#'){
+							//$link = $isthis->generateUrl($item['urls']);
+							$link = '';
+							if(isset($arrUrl[$item['urls']])){
+								$link = $arrUrl[$item['urls']];
+							}
+						}	
+						else{
+							$link = 'javascript:;';
+						}
+						$menu.="<li $active><a href='".$link."'><i class='fa ".$classicon."'></i><span class='title'>".$item['name']."</span></a></li>";  
+					}
+				}
+			}
+			return $menu;	
+			#end
+		}
+		catch(Exception  $e){
+            return ERROR;
+        }
+	}
+	private function getChildrenMenuFromCloud($id, $right,$arrUrl,$uris){
+		global $db;
+		try{
+			$sql =  " 
+				SELECT m.name, m.parent, m.route, m.id, m.classicon, m.urls, m.processid,m.uris
+				FROM gcs_menus m                      
+				WHERE m.parent = $id
+				AND (
+					m.id IN ($right) OR
+					m.id IN (SELECT mm.parent FROM gcs_menus mm WHERE mm.id IN ($right))
+				)
+				and m.isdelete = 0
+				order by m.ordering ASC
+			";
+			//$children =   $cn->fetchAll($sql);
+			$children =   $db->selectdata($sql, array());
+			$menu = '';
+			foreach($children as $item){
+				$itemUris = '';
+				if(isset($arrUrl[$item['urls']])){
+					$itemUris = str_replace('/', '_', $arrUrl[$item['urls']]);
+				}
+				 $asub = $this->getChildrenMenuFromCloud($item['id'],$right,$arrUrl,$uris);   
+				 if(empty($item['classicon'])){
+					$classicon = 'fa-folder-o';
+				 }
+				 else{
+					$classicon = $item['classicon'];
+				 }
+				 //print_r($uris); exit;
+				 $select_uris = "/".$item['uris']."/";
+				 if($select_uris == $uris){
+					$active = 'class="active '.$itemUris.'"';
+				 }
+				 else{
+					//print_r($uris.'--->'.$item['uris']); 
+					
+					//exit;
+					if(substr($uris,1) ==  $item['uris']){
+						//$active = 'class="active '.$itemUris.'"';
+						$active = 'class=" '.$itemUris.'"';
+					}
+					else{
+						$active = 'class="'.$itemUris.'"';
+					}
+				 }
+				 
+				 if($asub){
+					$menu.="<li $active> <a href='javascript:;'>
+								<i class='fa $classicon'></i><span class='title'>".$item['name']."</span><span class='arrow '></span></a>";
+					$menu.='<ul class="sub-menu">';
+					$menu.=$asub;
+					$menu.='</ul></li>';  
+				 }
+				 else{
+					if(!empty($item['processid'])){
+						$processid = $item['processid'];
+					}
+					else{
+						$processid = "";
+					}
+					if($item['urls'] != '#'){
+						//$link = $isthis->generateUrl($item['urls']).$processid;
+						$link = '';
+						if(isset($arrUrl[$item['urls']])){
+							$link = $arrUrl[$item['urls']].$processid;
+						}
+					}	
+					else{
+						$link = 'javascript:;';
+					}
+					
+					if(strpos($active, 'active') !== false){
+						//$active = 'class="active '.$itemUris.$processid.'"';
+						$active = 'class=" '.$itemUris.$processid.'"';
+					}
+					else{
+						$active = 'class="'.$itemUris.$processid.'"';
+					}
+					
+					//$link = $isthis->generateUrl($item['urls']).$processid;
+					$menu.= "<li $active><a href='".$link."'><i class='fa $classicon'></i><span class='title'>".$item['name']."</span></a></li>"; 
+				 }
+			}
+			return $menu;
+		}
+		catch(Exception  $e){
+            return ERROR;
+        }
+    }
+    public function getCompanyManager($username){
+		global $db;
+        try{
+			$sql = "
+				SELECT cm.companies
+				FROM gcs_company_management cm
+				WHERE cm.username = '$username' AND cm.deleted = 0
+				;
+			";
+			$result = $db->selectdata($sql, array()); //echo $sql; exit;
+			return !empty($result[0]['companies']) ? $result[0]['companies'] : '';
+		}
+        catch(Exception $e){
+            return ERROR;
+        }
+	}
+	public function insertUserDashboard($username, $password, $role){
+		global $db;
+        try{
+			$sql = "
+				SELECT *
+				FROM gcs_users u
+				WHERE u.username = '".$username."'
+			";
+			$result = $db->selectdata($sql, array());
+			if(count($result) > 0){
+				return 1;
+			}
+			$sql = "
+				SELECT *
+				FROM gcs_users u
+				WHERE u.username = '".$role."'
+			";	
+			$result = $db->selectdata($sql, array());
+			if(count($result) > 0){
+				$salt = "s+(_a*";
+				$password = $password.'{'.$salt.'}';  
+				$password = base64_encode(hash("md5", $password, true));
+				$sql = "
+					INSERT INTO gcs_users (username, `password`, fullname, groupid, location, shifts, sites, isdelete)
+					VALUES ('".$username."', '".$password."', 'Hyla User', ".$result[0]['groupid'].", 
+					'".$result[0]['location']."', '".$result[0]['shifts']."', '".$result[0]['sites']."', 0)
+				";
+				$db->querydata($sql, array());
+				return 1;
+			}
+		}
+        catch(Exception $e){
+            return ERROR;
+        }
+	}
+	public function insertUserMachineLoginFailed($username, $password, $stationsn){
+		global $db;
+        try{
+			$sql = "
+				INSERT INTO gcs_login_failed_log (
+					username, password, station_serial
+				) 
+				VALUES ('".$username."', '".$password."', '".$stationsn."') 
+			";
+			$db->querydata($sql, array());
+			return 1;
+		}
+        catch(Exception $e){
+            return ERROR;
+        }
+	}
+	public function dropdownCustomerList($customerList = ''){
+		global $db;
+		try{
+			$criteria = '';
+			if(!empty($customerList)){ $criteria .=  ' AND u.id IN('.$customerList.')'; }
+			$sql = "
+				SELECT u.id, u.company_name customer_name
+				FROM gcs_user u
+				WHERE (u.parent_id = 1 OR u.parent_id = u.id) AND u.delif = 0 $criteria
+				ORDER BY u.company_name
+				;
+			";
+			return $db->selectdata($sql);
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function dropdownMachineList($customerList = '', $locationList = '', $typeList = ''){
+		global $db;
+		try{
+			$criteria = '';
+			if($customerList){
+				$criteria .= ' AND so.user_name IN('.$customerList.')';
+			}
+			if($locationList){
+				$criteria .= ' AND s.location_id IN('.$locationList.')';
+			}
+			if($typeList){
+				$criteria .= ' AND s.station_type IN('.$typeList.')';
+			}
+			$sql = " 	
+				SELECT s.station_serial, so.user_name customerid, s.station_type
+				FROM gcs_station s 
+				INNER JOIN gcs_station_owner so ON s.id = so.stationid 
+				WHERE s.del_if = 1 AND so.owner_status = 1 $criteria
+			"; //echo $sql; exit;
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function dropdownModelList(){
+		global $db;
+		try{
+			// $sql = " 	
+				// SELECT m.id, m.model_name
+				// FROM gcs_model m
+				// LEFT JOIN gcs_vendor v ON v.id = m.vendor_id 
+				// WHERE m.del_if = 0
+				// ORDER BY m.model_name;
+			// ";
+			$sql = " 	
+				SELECT m.id, m.model_name
+				FROM gcs_model m
+				ORDER BY m.model_name;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function dropdownOperatorList($customerList = ''){
+		global $db;
+		try{
+			$criteriaC = '';
+			$criteriaU = '';
+			if(!empty($customerList)){ 
+				$criteriaC .=  ' AND c.id IN('.$customerList.')'; 
+				$criteriaU .=  ' AND u.parent_id IN('.$customerList.')'; 
+			}
+			$sql = "
+				SELECT c.id, c.username, 1 AS parent_id, c.company_name AS 'name_obj'
+				FROM gcs_user c
+				WHERE c.delif = 0 AND c.parent_id = 1 $criteriaC
+				UNION
+				SELECT id, username, parent_id, CONCAT_WS(' ', u.firstname, u.lastname) 
+				FROM gcs_user u
+				WHERE u.delif = 0 AND u.parent_id <> 1 $criteriaU
+				;
+			";
+			return $db->selectdata($sql);
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function dropdownDashboardUserList(){
+		global $db;
+		try{
+			$sql = "
+				SELECT u.username, u.fullname
+				FROM gcs_users u
+				WHERE u.isdelete = 0
+				;
+			";
+			return $db->selectdata($sql);
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function getCompanyManagerList($search){
+		global $db;
+		try{
+			$username = isset($search->username) ? $search->username : '';
+			$companies = isset($search->customer) ? $search->customer : '';
+			$limit = isset($search->start) ? "LIMIT ".$search->start.", 10" : '';
+			$criteria = '';
+			
+			if(!empty($username)){
+				$criteria .= " AND cm.username IN ($username) ";
+			}
+			if(!empty($companies)){
+				$criteria .= " AND cm.companies = IN ($companies) ";
+			}
+			$sql = "
+				SELECT *
+				FROM (
+					SELECT cm.id, cm.username, cm.companies
+					FROM gcs_company_management cm
+					WHERE deleted = 0 $criteria
+					$limit
+				) rs
+				UNION
+				SELECT COUNT(*) total, 1 as 'username', 1 as 'companies'
+				FROM gcs_company_management m
+				WHERE deleted = 0 $criteria;
+			"; //echo $sql; exit;
+			$list = $db->selectdata($sql, array());
+			$total = isset($list[count($list) - 1]['id']) ? $list[count($list) - 1]['id'] : 0;
+			unset($list[count($list) - 1]);
+			return array('LIST' => $list, 'TOTAL' => $total);
+		} catch(Exception $e){
+			return array();
+		}
+	}
+	public function saveCompanyManager($id = '', $search){
+		global $db;
+		try{
+			$username = $search->username;
+			$companyList = $search->customer;
+			if(empty($id)){
+				$sql = "SELECT cm.username FROM gcs_company_management cm WHERE cm.username = '$username';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return 'Existed'; } else{
+					$sql = "INSERT INTO gcs_company_management(username, companies) VALUES('$username', '$companyList');";
+					$db->querydata($sql);
+					return 'Save success!';
+				}
+			} else{
+				$sql = "SELECT cm.username FROM gcs_company_management cm WHERE cm.username = '$username' AND cm.id <> '$id';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return 'Existed'; } else{
+					$sql = "
+						UPDATE gcs_company_management cm
+						SET cm.username = '$username', companies = '$companyList'
+						WHERE cm.id = '$id';
+					";
+					$db->querydata($sql);
+					return 'Save success';
+				}
+			}
+		} catch(Exception $e){
+			return 'Error in process!';
+        }
+	}
+	public function deleteCompanyManager($id){
+		global $db;
+		try{
+			$sql = "
+				UPDATE gcs_company_management cm
+				SET deleted = 1
+				WHERE cm.id IN($id)
+				;
+			";
+			return $db->querydata($sql);
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function updateMachineToSyncList($customer, $po, $machineList){
+		global $db;
+		try{
+			// print_r($machineList);
+			// echo count(); exit;
+			$sql = "
+				SELECT s.station_serial
+				FROM gcs_station s
+				INNER JOIN gcs_station_owner so ON so.stationid = s.id
+				WHERE so.owner_status = 1 AND so.user_name = '$customer' AND s.station_type = 17 AND s.del_if = 1;
+			";
+			$stationList = $db->selectdata($sql);
+			if(count($stationList)){
+				$sql = " DELETE FROM gsi_asn_file_sync WHERE customer = '$customer' AND po = '$po'; ";
+				$db->querydata($sql);
+				$sql = "INSERT INTO gsi_asn_file_sync(`customer`,`machine_sn`, `po`, `issync`, `synced`, `time_created`)";
+				$sqlTmp = '';
+				foreach($stationList as $item){
+					$stationSerial = $item['station_serial'];
+					$issync = 2; // not set up for sync 
+					$synced = 0; // not synced
+					if(isset($machineList->$stationSerial) || !count((array)$machineList)){ $issync = 1; }
+					$sqlTmp .= ($sqlTmp == '' ? 'VALUES' : ',') . "('$customer', '$stationSerial', '$po', '$issync', '$synced', NOW())";
+				}
+				if(!empty($sqlTmp)){
+					$sql.=$sqlTmp.';';
+					$result = $db->querydata($sql);
+					return $result;
+				}
+			}
+			return true;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function updateASNLogSyncListViaID($idList){
+		global $db;
+		try{
+			$sql = "
+				UPDATE gsi_asn_file_sync s
+				SET s.issync = 1, s.synced = 0
+				WHERE s.id IN($idList);
+			";
+			$result = $db->querydata($sql);
+			return true;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function updateASNLogSyncList($username, $customer, $po, $file){
+		global $db;
+		try{
+			$sql = " DELETE FROM gsi_asn_file_log WHERE customer = '$customer' AND po = '$po'; ";
+			$db->querydata($sql);
+			$sql = "
+				INSERT INTO gsi_asn_file_log(`po`, `customer`, `user_imported`, `time_imported`, `file_imported`)
+				VALUES('$po', '$customer', '$username', NOW(), '$file');
+			";
+			$result = $db->querydata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function getASNFileLogTotal($customer){
+		global $db;
+		try{
+			$criteria = '';
+			if(!empty($customer)){
+				$criteria .= ($criteria == '' ? ' WHERE ' : ' AND ')."customer = '$customer'";
+			}
+			$sql = "
+				SELECT COUNT(1) total
+				FROM gsi_asn_file_log
+				$criteria;
+			";
+			$result = $db->selectdata($sql);
+			return !empty($result[0]['total']) ? $result[0]['total'] : 0;
+		} catch(Exception $e){
+			return 0;
+        }
+	}
+	public function getASNFileLogList($customer){
+		global $db;
+		try{
+			$criteria = '';
+			if(!empty($customer)){
+				$criteria .= ($criteria == '' ? ' WHERE ' : ' AND ')."customer = '$customer'";
+			}
+			$sql = "
+				SELECT *
+				FROM gsi_asn_file_log
+				$criteria
+				ORDER BY id DESC;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function getASNFileDetail($customer, $po){
+		global $db;
+		try{
+			$sql = "
+				SELECT *
+				FROM gsi_asn_file_sync s
+				WHERE s.customer = '$customer' AND s.po = '$po'
+				ORDER BY s.machine_sn;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function getMachineToSyncData($start, $limit = 100){
+		global $db;
+		try{
+			$sql = "
+				SELECT 	rs.id, rs.station_serial, rs.station_type, rs.locationid, rs.customerid,
+					(SELECT REPLACE(l.time_zone, 'UTC ', '') FROM gcs_location l WHERE l.id = rs.locationid) timezone
+				FROM(
+					SELECT s.id, s.station_serial, s.location_id locationid, s.last_login, so.user_name customerid,
+						s.station_type
+					FROM gcs_station s INNER JOIN gcs_station_owner so ON so.stationid = s.id
+					WHERE so.owner_status = 1 AND s.station_type = 17 AND s.del_if = 1
+					LIMIT $start, $limit
+				) rs
+				/*WHERE rs.last_login >= DATE_SUB(NOW(), INTERVAL 12 HOUR)*/;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function getGsiMachineToSyncData($start, $limit = 100){
+		global $db;
+		try{
+			$sql = "
+				SELECT 	rs.id, rs.station_serial, rs.station_type, rs.locationid, rs.customerid,
+					(SELECT REPLACE(l.time_zone, 'UTC ', '') FROM gcs_location l WHERE l.id = rs.locationid) timezone
+				FROM(
+					SELECT s.id, s.station_serial, s.location_id locationid, s.last_login, so.user_name customerid,
+						s.station_type
+					FROM gcs_station s INNER JOIN gcs_station_owner so ON so.stationid = s.id
+					WHERE so.owner_status = 1 AND so.user_name = 2900 AND s.station_type = 17 AND s.del_if = 1
+					LIMIT $start, $limit
+				) rs
+				/*WHERE rs.last_login >= DATE_SUB(NOW(), INTERVAL 12 HOUR)*/;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function getZlogToSyncData($start, $zlog){
+		global $db;
+		try{
+			$sql = "
+				SELECT *
+				FROM $zlog z
+				WHERE z.erase_id > $start
+				LIMIT 1000;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function getGsiZlogToSyncData($start, $zlog){
+		global $db;
+		try{
+			$sql = "
+				SELECT *
+				FROM $zlog z
+				WHERE z.erase_id > $start 
+				-- AND z.process_type LIKE 'GSI%'
+				LIMIT 100;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function getSITOperatorList($search){
+		global $db;
+		try{
+			$username = isset($search->username) ? $search->username : '';
+			$customer = isset($search->customer) ? $search->customer : '';
+			$limit = isset($search->start) ? "LIMIT ".$search->start.", 10" : '';
+			$criteria = '';
+			
+			if(!empty($username)){ $criteria .= " AND u.username = '$username' "; }
+			if(!empty($customer)){ $criteria .= " AND u.customer IN ($customer) "; }
+			$sql = "
+				SELECT *
+				FROM (
+					SELECT u.id, u.customer, u.username, u.fullname, u.privilege, u.phonenumber, u.others,
+						(SELECT GROUP_CONCAT(m.station_serial) FROM sit_user_syncmap m WHERE m.username = u.username) station_serial
+					FROM sit_user_account u
+					WHERE isdelete = 0 $criteria
+					$limit
+				) rs
+				UNION
+				SELECT COUNT(1) 'total', 1 AS 'customer', 1 AS 'username', 1 AS 'fullname', 
+					1 AS 'privilege', 1 AS 'phonenumber', 1 AS 'others', 1 AS 'station_serial'
+				FROM sit_user_account u
+				WHERE isdelete = 0 $criteria;
+			"; //echo $sql; exit;
+			$list = $db->selectdata($sql, array());
+			$total = isset($list[count($list) - 1]['id']) ? $list[count($list) - 1]['id'] : 0;
+			unset($list[count($list) - 1]);
+			return array('LIST' => $list, 'TOTAL' => $total);
+		} catch(Exception $e){
+			return array();
+		}
+	}
+	public function saveSITOperator($id = '', $search){
+		global $db;
+		try{
+			$stationList = $search->station_serial;
+			$customer = $search->customer;
+			$username = $search->username;
+			$password = $search->password;
+			$fullname = $search->fullname;
+			$privilege = $search->privilege;
+			if(empty($id)){
+				$uniqueid = $this->generateUniqueID();
+				$sql = "SELECT cm.username FROM sit_user_account cm WHERE cm.username = '$username';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return $username.' was existed'; } else{
+					$password = md5($password);
+					$sql = "INSERT INTO sit_user_account(id, customer, username, password, fullname, privilege) VALUES('$uniqueid', '$customer', '$username', '$password', '$fullname', '$privilege');";
+					$db->querydata($sql);
+					$this->updateSyncSitStation($username, $stationList);
+					return 'Save success!';
+				}
+			} else{
+				$sql = "SELECT cm.username FROM sit_user_account cm WHERE cm.username = '$username' AND cm.id <> '$id';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return $username.' was existed'; } else{
+					if(!empty($password)){ $password = 'cm.password = '."'".md5($password)."',"; }
+					$sql = "
+						UPDATE sit_user_account cm
+						SET cm.username = '$username', customer = '$customer', 
+							$password fullname = '$fullname', privilege = '$privilege'
+						WHERE cm.id = '$id';
+					";
+					$db->querydata($sql);
+					$this->updateSyncSitStation($username, $stationList);
+					return 'Save success';
+				}
+			}
+		} catch(Exception $e){
+			return 'Error in process!';
+        }
+	}
+	public function deleteSITOperator($id){
+		global $db;
+		try{
+			$id = "'".str_replace(',', "','", $id)."'";
+			$sql = "
+				UPDATE sit_user_account cm
+				SET isdelete = 1
+				WHERE cm.id IN($id)
+				;
+			";
+			$result = $db->querydata($sql);
+			return $result ? 'success' : 'Failed';
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function updateSyncSitStation($username,  $stationList){
+		global $db;
+		try{
+			$stationList = explode(',', $stationList);
+			if(count($stationList)){
+				$sqlInsertSyncMap = " INSERT INTO sit_user_syncmap(`station_serial`, `username`) VALUES ";
+				$sqlInsertTmp = '';
+				$stationString = '';
+				foreach($stationList as $station){ $stationString .= ($stationString === '' ? '' : ',')."'$station'"; $sqlInsertTmp .= ($sqlInsertTmp === '' ? '' : ',')."('$station', '$username')"; }
+				$sqlInsertSyncMap .= $sqlInsertTmp." ON DUPLICATE KEY UPDATE username = VALUES(username), is_sync = 1;";
+				$sqlRemove = " DELETE FROM sit_user_syncmap WHERE username = '$username'; ";
+				// echo $sqlRemove;
+				$db->querydata($sqlRemove);
+				$db->querydata($sqlInsertSyncMap);
+				$sql = "
+					UPDATE gcs_station s
+					SET s.sync_user = 1
+					WHERE s.station_serial IN($stationString) AND s.station_type = 24;
+				";
+				$db->querydata($sql);
+			}
+			return 1;
+		} catch(Exception $e){
+			return 0;
+        }
+	}
+	public function getSITRegistrationList($search){
+		global $db;
+		try{
+			$stationsn = isset($search->stationsn) ? $search->stationsn : '';
+			$customerid = isset($search->customerid) ? $search->customerid : '';
+			$phone_serialnumber = isset($search->phone_serialnumber) ? $search->phone_serialnumber : '';
+			$phone_imei = isset($search->phone_imei) ? $search->phone_imei : '';
+			$fromdate = isset($search->fromdate) ? $search->fromdate : '';
+			$todate = isset($search->todate) ? $search->todate : '';
+			$limit = isset($search->start) ? "LIMIT ".$search->start.", 10" : '';
+			$criteria = 'WHERE isdelete = 0';
+			
+			if(!empty($phone_serialnumber)){ $criteria .= ($criteria == '' ? '' : ' AND ') . " r.phone_serialnumber = '$phone_serialnumber' "; }
+			if(!empty($phone_imei)){ $criteria .= ($criteria == '' ? '' : ' AND ') . "  r.phone_imei = '$phone_imei' "; }
+			if(!empty($stationsn)){ $criteria .= ($criteria == '' ? '' : ' AND ') . "  r.stationsn IN ($stationsn) "; }
+			if(!empty($customerid)){ $criteria .= ($criteria == '' ? '' : ' AND ') . "  r.customerid IN ($customerid) "; }
+			if(!empty($fromdate)){ $criteria .= ($criteria == '' ? '' : ' AND ') . "  r.datetime_in >= '".date('Y-m-d', strtotime($fromdate))." 00:00:00' "; }
+			if(!empty($todate)){ $criteria .= ($criteria == '' ? '' : ' AND ') . "  r.datetime_in <= '".date('Y-m-d', strtotime($todate))." 23:59:59' "; }
+			
+			$sql = "
+				SELECT *
+				FROM (
+					SELECT 	r.code id, r.stationsn, r.customerid, r.phone_serialnumber, r.phone_imei, r.datetime_in,
+						(SELECT u.company_name FROM gcs_user u WHERE u.id = r.customerid AND u.delif = 0) customer_name
+					FROM sit_registration r 
+					$criteria
+					$limit
+				) rs
+				UNION
+				SELECT COUNT(1) 'total', 1 AS 'stationsn', 1 AS 'customerid', 1 AS 'phone_serialnumber', 
+					1 AS 'phone_imei', 1 AS 'datetime_in', 1 AS 'customer_name'
+				FROM sit_registration r 
+				$criteria;
+			"; 
+			// echo $sql; exit;
+			$list = $db->selectdata($sql, array());
+			$total = isset($list[count($list) - 1]['id']) ? $list[count($list) - 1]['id'] : 0;
+			unset($list[count($list) - 1]);
+			return array('LIST' => $list, 'TOTAL' => $total);
+		} catch(Exception $e){
+			return array();
+		}
+	}
+	public function saveSITRegistration($id = '', $search){
+		global $db;
+		try{
+			$stationList = $search->station_serial;
+			$customer = $search->customer;
+			$username = $search->username;
+			$password = $search->password;
+			$fullname = $search->fullname;
+			$privilege = $search->privilege;
+			if(empty($id)){
+				$sql = "SELECT cm.username FROM sit_user_account cm WHERE cm.username = '$username';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return $username.' was existed'; } else{
+					$password = md5($password);
+					$sql = "INSERT INTO sit_user_account(customer, username, password, fullname, privilege) VALUES('$customer', '$username', '$password', '$fullname', '$privilege');";
+					$db->querydata($sql);
+					$this->updateSyncSitStation($username, $stationList);
+					return 'Save success!';
+				}
+			} else{
+				$sql = "SELECT cm.username FROM sit_user_account cm WHERE cm.username = '$username' AND cm.id <> '$id';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return $username.' was existed'; } else{
+					if(!empty($password)){ $password = 'cm.password = '."'".md5($password)."',"; }
+					$sql = "
+						UPDATE sit_user_account cm
+						SET cm.username = '$username', customer = '$customer', 
+							$password fullname = '$fullname', privilege = '$privilege'
+						WHERE cm.id = '$id';
+					";
+					$db->querydata($sql);
+					$this->updateSyncSitStation($username, $stationList);
+					return 'Save success';
+				}
+			}
+		} catch(Exception $e){
+			return 'Error in process!';
+        }
+	}
+	public function deleteSITRegistration($id){
+		global $db;
+		try{
+			$strCode = "'".str_replace(',', "','", $id)."'";
+			$timeNow = gmdate('Y-m-d H:i:s', time());
+			$sql = "
+				UPDATE sit_registration
+				SET isdelete = 1,
+				dateupdate = '$timeNow'
+				WHERE code IN($strCode);
+			";
+			$result = $db->querydata($sql);
+			
+			$this->updateIdSync($strCode);
+			
+			$date = '2016-01-25';
+			$sql = "
+				UPDATE sit_registration_sync
+				SET 
+					datesync = '$date'
+				WHERE stationsn IN(
+					SELECT s.station_serial
+					FROM gcs_station s
+					INNER JOIN gcs_station_owner so ON so.stationid = s.id
+					WHERE so.owner_status = 1
+					AND s.del_if = 1
+					AND s.station_type = 24
+					AND so.user_name IN(
+						SELECT DISTINCT customerid
+						FROM sit_registration
+						WHERE code IN($strCode)
+					)
+				);
+			";
+			$db->querydata($sql);
+			return $result ? 'Successfully' : 'Failed';
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function updateIdSync($strCode){
+		global $db;
+		//lay ra cac id can update
+		$sql = "SELECT id
+				FROM sit_registration
+				WHERE code IN($strCode)
+				";
+		$queryId = $db->selectdata($sql);
+		$arrIdUpdate = array();
+		foreach($queryId as $item){
+			$arrIdUpdate[] = ','.$item['id'].',';
+		}
+		
+		//lay ra cac id da duoc dong bo
+		$sql = "SELECT stationsn, idsync
+				FROM sit_registration_sync
+				WHERE idsync IS NOT NULL
+				AND idsync <> ''
+				AND stationsn IN(
+					SELECT s.station_serial
+					FROM gcs_station s
+					INNER JOIN gcs_station_owner so ON so.stationid = s.id
+					WHERE so.owner_status = 1
+					AND s.del_if = 1
+					AND s.station_type = 24
+					AND so.user_name IN(
+						SELECT DISTINCT customerid
+						FROM sit_registration
+						WHERE code IN($strCode)
+					)
+				)
+				";
+		$queryIdSync = $db->selectdata($sql);
+		if(empty($queryIdSync)){
+			return 1;
+		}
+		
+		$sqlUpdateSub = '';
+		foreach($queryIdSync as $item){
+			$stationsn = $item['stationsn'];
+			$strIdSync = ','.$item['idsync'].',';
+			$strIdSync = str_replace($arrIdUpdate, ',', $strIdSync);
+			if(substr($strIdSync, 0, 1) == ','){
+				$strIdSync = substr($strIdSync, 1);
+			}
+			if(substr($strIdSync, -1, 1) == ','){
+				$strIdSync = substr($strIdSync, 0, -1);
+			}
+			$sqlUpdateSub .= " WHEN '$stationsn' THEN '$strIdSync'";
+		}
+		//bo di cac id duoc update trong mang id da dong bo
+		$sql = "UPDATE sit_registration_sync
+				SET idsync = CASE stationsn $sqlUpdateSub ELSE idsync END
+				WHERE 1=1
+				"; 
+		$db->querydata($sql);
+	}
+	public function getModelCertificateList($search){
+		global $db;
+		try{
+			$internal_model = isset($search->internal_model) ? $search->internal_model : '';
+			$model_name = isset($search->model_name) ? $search->model_name : '';
+			$model_number = isset($search->model_number) ? $search->model_number : '';
+			$alt_model_number = isset($search->alt_model_number) ? $search->alt_model_number : '';
+			$content_clear = isset($search->content_clear) ? $search->content_clear : '';
+			$verify = isset($search->verify) ? $search->verify : '';
+			$diagnostic = isset($search->diagnostic) ? $search->diagnostic : '';
+			$platform = isset($search->platform) ? $search->platform : '';
+			$external_sd = isset($search->external_sd) ? $search->external_sd : '';
+			$mfr = isset($search->mfr) ? $search->mfr : '';
+			$vendor_id = isset($search->vendor_id) ? $search->vendor_id : '';
+			
+			$exportMode = isset($search->export_mode) ? $search->export_mode : false;
+			$limit = isset($search->start) ? "LIMIT ".$search->start.", 10" : '';
+			$criteria = '';
+			
+			if(!empty($internal_model)){ $criteria .= " AND u.internal_model LIKE '$internal_model%' "; }
+			if(!empty($model_name)){ $criteria .= " AND u.model_name LIKE '$model_name%' "; }
+			if(!empty($model_number)){ $criteria .= " AND u.model_number LIKE '$model_number%' "; }
+			if(!empty($alt_model_number)){ $criteria .= " AND u.alt_model_number LIKE '$alt_model_number%' "; }
+			if(!empty($content_clear)){ $criteria .= " AND u.content_clear LIKE '$content_clear%' "; }
+			if(!empty($verify)){ $criteria .= " AND u.verify LIKE '$verify%' "; }
+			if(!empty($diagnostic)){ $criteria .= " AND u.diagnostic LIKE '$diagnostic%' "; }
+			if(!empty($platform)){ $criteria .= " AND u.platform LIKE '$platform%' "; }
+			if(!empty($external_sd)){ $criteria .= " AND u.external_sd LIKE '$external_sd%' "; }
+			if(!empty($mfr)){ $criteria .= " AND u.mfr LIKE '$mfr%' "; }
+			if(!empty($vendor_id)){ $criteria .= " AND u.vendor_id IN ($vendor_id) "; }
+			if(!$exportMode){
+				$sql = "
+					SELECT *
+					FROM (
+						SELECT 	u.id, u.internal_model, u.model_name, u.model_number,
+							u.alt_model_number, u.content_clear, u.verify, u.diagnostic, 
+							u.platform, u.external_sd, u.mfr, u.vendor_id,
+							u.device_source, u.customer, u.requested_by, u.processed_by,
+							u.devive_supplied_by, u.date_last_processed, u.note, u.capacity, 
+							u.content_clear_version, u.verify_version, u.diagnostic_version
+						FROM gcs_model_certificate u
+						WHERE 1 $criteria
+						ORDER BY u.mfr, u.model_name, u.model_number
+						$limit
+					) rs
+					UNION
+					SELECT COUNT(1) 'total', 1 AS 'internal_model', 1 AS 'model_name', 1 AS 'model_number',
+						1 AS 'alt_model_number', 1 AS 'content_clear', 1 AS 'verify', 1 AS 'diagnostic', 
+						1 AS 'platform', 1 AS 'external_sd', 1 AS 'mfr', 1 AS 'vendor_id',
+						1 AS 'device_source', 1 AS 'customer', 1 AS 'requested_by', 1 AS 'processed_by',
+						1 AS 'devive_supplied_by', 1 AS 'date_last_processed', 1 AS 'note', 1 AS 'capacity',
+						1 AS 'content_clear_version', 1 AS 'verify_version', 1 AS 'diagnostic_version'
+					FROM gcs_model_certificate u
+					WHERE 1 $criteria;
+				"; 
+				// echo $sql;
+				$list = $db->selectdata($sql);
+				$total = isset($list[count($list) - 1]['id']) ? $list[count($list) - 1]['id'] : 0;
+				unset($list[count($list) - 1]);
+				return array('LIST' => $list, 'TOTAL' => $total);
+			} else{
+				$sql = "
+					SELECT 	u.id, u.internal_model, u.model_name, u.model_number,
+						u.alt_model_number, u.content_clear, u.verify, u.diagnostic, 
+						u.platform, u.external_sd, u.mfr, u.vendor_id,
+						u.device_source, u.customer, u.requested_by, u.processed_by,
+						u.devive_supplied_by, u.date_last_processed, u.note, u.capacity, 
+						u.content_clear_version, u.verify_version, u.diagnostic_version
+					FROM gcs_model_certificate u
+					WHERE 1 $criteria
+					ORDER BY u.mfr, u.model_name, u.model_number;
+				";
+				$list = $db->selectdata($sql);
+				return array('LIST' => $list);
+			}
+			
+		} catch(Exception $e){
+			return array();
+		}
+	}
+	public function saveModelCertificate($id = '', $search){
+		global $db;
+		try{
+			$internal_model = isset($search->internal_model) ? $search->internal_model : '';
+			$model_name = isset($search->model_name) ? $search->model_name : '';
+			$model_number = isset($search->model_number) ? $search->model_number : '';
+			$alt_model_number = isset($search->alt_model_number) ? $search->alt_model_number : '';
+			$content_clear = isset($search->content_clear) ? $search->content_clear : '';
+			$verify = isset($search->verify) ? $search->verify : '';
+			$diagnostic = isset($search->diagnostic) ? $search->diagnostic : '';
+			$platform = isset($search->platform) ? $search->platform : '';
+			$external_sd = isset($search->external_sd) ? $search->external_sd : '';
+			$vendor_id = isset($search->vendor_id) ? $search->vendor_id : '';
+			
+			$device_source = isset($search->device_source) ? $search->device_source : '';
+			$customer = isset($search->customer) ? $search->customer : '';
+			$requested_by = isset($search->requested_by) ? $search->requested_by : '';
+			$processed_by = isset($search->processed_by) ? $search->processed_by : '';
+			$devive_supplied_by = isset($search->devive_supplied_by) ? $search->devive_supplied_by : '';
+			$date_last_processed = isset($search->date_last_processed) ? $search->date_last_processed : '';
+			$note = isset($search->note) ? $search->note : '';
+			$capacity = isset($search->capacity) ? $search->capacity : '';
+			$content_clear_version = isset($search->content_clear_version) ? $search->content_clear_version : '';
+			$verify_version = isset($search->verify_version) ? $search->verify_version : '';
+			$diagnostic_version = isset($search->diagnostic_version) ? $search->diagnostic_version : '';
+			
+			if(empty($date_last_processed)){ $date_last_processed = date('d F Y', time()); }
+			
+			if(empty($id)){
+				$sql = "SELECT cm.id FROM gcs_model_certificate cm WHERE cm.model_number = '$model_number' AND cm.internal_model = '$internal_model';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return $model_number.';'.$internal_model.' was existed'; } else{
+					$sql = "
+						INSERT INTO gcs_model_certificate(
+							`internal_model`, `model_name`, `model_number`, `alt_model_number`, 
+							`content_clear`, `verify`, `diagnostic`, `platform`, 
+							`external_sd`, `mfr`, `vendor_id`,
+							`device_source`, `customer`, `requested_by`,`processed_by`,
+							`devive_supplied_by`, `date_last_processed`, `note`,`capacity`,
+							 `content_clear_version`, `verify_version`,`diagnostic_version`
+						) VALUES(
+							'".addslashes($internal_model)."', '".addslashes($model_name)."', '".addslashes($model_number)."', '".addslashes($alt_model_number)."', 
+							'".addslashes($content_clear)."', '".addslashes($verify)."', '".addslashes($diagnostic)."', '".addslashes($platform)."', 
+							'".addslashes($external_sd)."', (SELECT v.name FROM gcs_vendor v WHERE v.id = '$vendor_id'), '".addslashes($vendor_id)."',
+							'".addslashes($device_source)."','".addslashes($customer)."','".addslashes($requested_by)."',
+							'".addslashes($processed_by)."','".addslashes($devive_supplied_by)."','".addslashes($date_last_processed)."',
+							'".addslashes($note)."','".addslashes($capacity)."',
+							'".addslashes($content_clear_version)."','".addslashes($verify_version)."','".addslashes($diagnostic_version)."'
+						);";
+					$db->querydata($sql); //echo $sql;
+					$sql = " UPDATE gcs_station s SET s.sync_certificate = 1; ";
+					$db->querydata($sql);
+					return 'Save success!';
+				}
+			} else{
+				$sql = "SELECT cm.model_name FROM gcs_model_certificate cm WHERE cm.model_number = '$model_number' AND cm.internal_model = '$internal_model' AND cm.id <> '$id';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return $model_number.';'.$internal_model.' was existed'; } else{
+					$sql = "
+						UPDATE gcs_model_certificate cm
+						SET cm.internal_model = '$internal_model', cm.model_name = '$model_name',
+							cm.model_number = '$model_number', cm.alt_model_number = '$alt_model_number', 
+							cm.content_clear = '$content_clear', cm.verify = '$verify', 
+							cm.diagnostic = '$diagnostic', cm.platform = '$platform', 
+							cm.external_sd = '$external_sd', cm.vendor_id = '$vendor_id', 
+							cm.mfr = (SELECT v.name FROM gcs_vendor v WHERE v.id = '$vendor_id'),
+							cm.device_source = '$device_source', cm.customer = '$customer', 
+							cm.requested_by = '$requested_by', cm.processed_by = '$processed_by', 
+							cm.devive_supplied_by = '$devive_supplied_by', cm.date_last_processed = '$date_last_processed',
+							cm.note = '".addslashes($note)."', cm.capacity = '$capacity', 
+							cm.content_clear_version = '$content_clear_version', cm.verify_version = '$verify_version', cm.diagnostic_version = '$diagnostic_version'
+						WHERE cm.id = '$id';
+					";
+					$db->querydata($sql);
+					$sql = " UPDATE gcs_station s SET s.sync_certificate = 1; ";
+					$db->querydata($sql);
+					return 'Save success';
+				}
+			}
+		} catch(Exception $e){
+			return 'Error in process!';
+        }
+	}
+	public function deleteModelCertificate($id){
+		global $db;
+		try{
+			$sql = " DELETE FROM gcs_model_certificate WHERE id IN($id);";
+			$result = $db->querydata($sql);
+			$sql = " UPDATE gcs_station s SET s.sync_certificate = 1; ";
+			$db->querydata($sql);
+			return $result ? 'Delete success' : 'Failed';
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function getItestModelList($search){
+		global $db;
+		try{
+			$model_name = isset($search->model_name) ? $search->model_name : '';
+			$product_name = isset($search->product_name) ? $search->product_name : '';
+			$vendor_id = isset($search->vendor_id) ? $search->vendor_id : '';
+			$exportMode = isset($search->export_mode) ? $search->export_mode : false;
+			$limit = isset($search->start) ? "LIMIT ".$search->start.", 10" : '';
+			$criteria = '';
+			
+			if(!empty($model_name)){ $criteria .= " AND u.model_name LIKE '$model_name%' "; }
+			if(!empty($product_name)){ $criteria .= " AND u.product_name LIKE '$product_name%' "; }
+			if(!empty($vendor_id)){ $criteria .= " AND u.vendor_id IN ($vendor_id) "; }
+			if(!$exportMode){
+				$sql = "
+					SELECT *
+					FROM (
+						SELECT u.id, u.model_name, u.product_name, u.vendor_id,
+							(SELECT v.name FROM gcs_vendor v WHERE v.id = u.vendor_id) mfg
+						FROM itest_model u
+						WHERE 1 $criteria
+						$limit
+					) rs
+					UNION
+					SELECT COUNT(1) 'total', 1 AS model_name, 1 AS product_name, 1 AS vendor_id, 1 AS mfg
+					FROM itest_model u
+					WHERE 1 $criteria;
+				"; 
+				// echo $sql; exit;
+				$list = $db->selectdata($sql);
+				$total = isset($list[count($list) - 1]['id']) ? $list[count($list) - 1]['id'] : 0;
+				unset($list[count($list) - 1]);
+				return array('LIST' => $list, 'TOTAL' => $total);
+			} else{
+				$sql = "
+					SELECT u.id, u.model_name, u.product_name, u.vendor_id,
+						(SELECT v.name FROM gcs_vendor v WHERE v.id = u.vendor_id) mfg
+					FROM itest_model u
+					WHERE 1 $criteria;
+				"; 
+				// echo $sql; exit;
+				$list = $db->selectdata($sql);
+				return array('LIST' => $list);
+			}
+			
+		} catch(Exception $e){
+			return array();
+		}
+	}
+	public function saveItestModel($id = '', $search){
+		global $db;
+		try{
+			$model_name = $search->model_name;
+			$product_name = $search->product_name;
+			$vendor_id = $search->vendor_id;
+			if(empty($id)){
+				$sql = "SELECT cm.id FROM itest_model cm WHERE cm.model_name = '$model_name';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return $model_name.' was existed'; } else{
+					$sql = "INSERT INTO itest_model(model_name, product_name, vendor_id) VALUES('$model_name', '$product_name', '$vendor_id');";
+					$db->querydata($sql);
+					return 'Save success!';
+				}
+			} else{
+				$sql = "SELECT cm.model_name FROM itest_model cm WHERE cm.model_name = '$model_name' AND cm.id <> '$id';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return $model_name.' was existed'; } else{
+					$sql = "
+						UPDATE itest_model cm
+						SET cm.model_name = '$model_name', product_name = '$product_name', 
+							vendor_id = '$vendor_id'
+						WHERE cm.id = '$id';
+					";
+					$db->querydata($sql);
+					$sql = " SELECT sm.station_serial FROM itest_model_sync sm WHERE sm.model_id IN($id); ";
+					$stationList = $db->selectdata($sql);
+					$stationString = '';
+					if(count($stationList)){
+						foreach($stationList as $iStation){
+							$stationString .= ($stationString == '' ? '' : ',')."'".$iStation['station_serial']."'";
+						}
+					}
+					if(!empty($stationString)){
+						$sql = " UPDATE itest_model_sync m SET m.is_sync = 1, m.synced = 0 WHERE m.station_serial IN ($stationString); ";
+						$db->querydata($sql);
+					}
+					return 'Save success';
+				}
+			}
+		} catch(Exception $e){
+			return 'Error in process!';
+        }
+	}
+	public function deleteItestModel($id){
+		global $db;
+		try{
+			$sql = " SELECT sm.station_serial FROM itest_model_sync sm WHERE sm.model_id IN($id); ";
+			$stationList = $db->selectdata($sql);
+			$stationString = '';
+			if(count($stationList)){
+				foreach($stationList as $iStation){
+					$stationString .= ($stationString == '' ? '' : ',')."'".$iStation['station_serial']."'";
+				}
+			}
+			$sql = " DELETE FROM itest_model WHERE id IN($id); ";
+			$result = $db->querydata($sql);
+			if(!empty($stationString)){
+				$sql = " UPDATE itest_model_sync m SET m.is_sync = 1, m.synced = 0 WHERE m.station_serial IN ($stationString); ";
+				$db->querydata($sql);
+			}
+			return $result ? 'Delete success' : 'Failed';
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function syncItestModelToMachine($idList, $machineList, $search){
+		global $db;
+		try{
+			$modelList = array();
+			if(!empty($idList)){
+				$modelList = explode(',', $idList);
+			} else{
+				$modelList = $this->getItestModelList($search);
+				$modelList = $modelList['LIST'];
+			}
+			if(count($modelList)){
+				$machineList = explode(',', $machineList);
+				$sqlSync = " INSERT INTO itest_model_sync( `station_serial`, `model_id`, `is_sync`, `synced`) ";
+				$sqlTmp = "";
+				$sqlMachine = '';
+				foreach($machineList as $itemMachine){
+					$sqlMachine .= ($sqlMachine == '' ? : '') ."'$itemMachine'";
+					foreach($modelList as $modelID){
+						$modelID = isset($modelID['id']) ? $modelID['id'] : $modelID;
+						$sqlTmp .= ($sqlTmp == '' ? 'VALUES ' : ',') . "('$itemMachine', '$modelID', 1, 0)";
+					}
+				}
+				$sqlSync .= $sqlTmp .'ON DUPLICATE KEY UPDATE `is_sync` = 1, `synced` = 0;';
+				$result = $db->querydata($sqlSync);
+				$sqlMachine = "UPDATE itest_model_sync SET is_sync = 1, synced = 0 WHERE station_serial IN($sqlMachine);";
+				$db->querydata($sqlMachine);
+				return $result ? 'success' : 'Failed';
+			}
+			return 'None model affected.';
+		} catch(Exception $e){
+			return 'Failed';
+        }
+	}
+	
+	public function getCounterDeviceList($search){
+		global $db;
+		try{
+			$location_id = isset($search->location_id) ? $search->location_id : '';
+			$counter_device = isset($search->counter_device) ? $search->counter_device : '';
+			$fromdate = isset($search->fromdate) ? $search->fromdate : '';
+			$todate = isset($search->todate) ? $search->todate : '';
+			$exportMode = isset($search->export_mode) ? $search->export_mode : false;
+			$limit = isset($search->start) ? "LIMIT ".$search->start.", 10" : '';
+			$criteria = '';
+			
+			if(!empty($location_id)){ $criteria .= " AND u.id IN ($location_id) "; }
+			if(!empty($counter_device)){ $criteria .= " AND u.counter_device = '$counter_device' "; }
+			if(!$exportMode){
+				$sql = "
+					SELECT *
+					FROM (
+						SELECT 	u.id, u.location_name, u.counter_device, u.fromdate, u.todate,
+							(SELECT ur.company_name FROM gcs_user ur WHERE ur.id = u.owner_by) customer_name
+						FROM gcs_location u
+						WHERE u.del_if = 0 $criteria
+						$limit
+					) rs
+					UNION
+					SELECT COUNT(1) 'total', 1, 1, 1, 1, 1
+					FROM gcs_location u
+					WHERE u.del_if = 0 $criteria;
+				"; 
+				// echo $sql; exit;
+				$list = $db->selectdata($sql);
+				$total = isset($list[count($list) - 1]['id']) ? $list[count($list) - 1]['id'] : 0;
+				unset($list[count($list) - 1]);
+				return array('LIST' => $list, 'TOTAL' => $total);
+			} else{
+				$sql = "
+					SELECT u.id, u.location_name, u.counter_device, u.fromdate, u.todate
+					FROM gcs_location u
+					WHERE u.del_if = 0 $criteria
+					$limit; 
+				"; 
+				// echo $sql; exit;
+				$list = $db->selectdata($sql);
+				return array('LIST' => $list);
+			}
+			
+		} catch(Exception $e){
+			return array();
+		}
+	}
+	public function saveCounterDevice($id = '', $search){
+		global $db;
+		try{ 
+			// print_r($search); exit;
+			$location_id = isset($search->location_id) ? $search->location_id : '';
+			$counter_device = isset($search->counter_device) ? $search->counter_device : '';
+			$fromdate = isset($search->fromdate) ? $search->fromdate : '';
+			$todate = isset($search->todate) ? $search->todate : '';
+			
+			$sql = "
+				UPDATE gcs_location cm
+				SET cm.counter_device = '$counter_device', fromdate = '$fromdate', todate = '$todate'
+				WHERE cm.id = '$location_id';
+			";
+			$db->querydata($sql);
+			return 'Update successfully.';
+		} catch(Exception $e){
+			return 'Error in process!';
+        }
+	}
+	public function deleteCounterDevice($id){
+		global $db;
+		try{
+			$sql = " SELECT sm.station_serial FROM itest_model_sync sm WHERE sm.model_id IN($id); ";
+			$stationList = $db->selectdata($sql);
+			$stationString = '';
+			if(count($stationList)){
+				foreach($stationList as $iStation){
+					$stationString .= ($stationString == '' ? '' : ',')."'".$iStation['station_serial']."'";
+				}
+			}
+			$sql = " DELETE FROM itest_model WHERE id IN($id); ";
+			$result = $db->querydata($sql);
+			if(!empty($stationString)){
+				$sql = " UPDATE itest_model_sync m SET m.is_sync = 1, m.synced = 0 WHERE m.station_serial IN ($stationString); ";
+				$db->querydata($sql);
+			}
+			return $result ? 'Delete success' : 'Failed';
+		} catch(Exception $e){
+			return array();
+        }
+	}
+		
+	public function generateUniqueID(){
+		return uniqid (GENERATE_SERVER, true); // the constant is defined in define.php
+	}
+	public function executeQuery($sql){
+		global $db;
+		try{
+			$result = $db->querydata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+}
+?>

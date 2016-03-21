@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/callcenter/!svn/ver/1/application/public/includes/menu
+END
+view.php
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/callcenter/!svn/ver/1/application/public/includes/menu/view.php
+END
+model.php
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/callcenter/!svn/ver/1/application/public/includes/menu/model.php
+END
+controller.php
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/callcenter/!svn/ver/1/application/public/includes/menu/controller.php
+END

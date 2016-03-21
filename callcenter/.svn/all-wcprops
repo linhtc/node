@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 26
+/svn/callcenter/!svn/ver/5
+END
+readme.rst
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/callcenter/!svn/ver/1/readme.rst
+END
+email.txt
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/callcenter/!svn/ver/1/email.txt
+END
+.htaccess
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/callcenter/!svn/ver/3/.htaccess
+END
+index.php
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/callcenter/!svn/ver/1/index.php
+END
+admin.php
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/callcenter/!svn/ver/1/admin.php
+END
+license.txt
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/callcenter/!svn/ver/1/license.txt
+END

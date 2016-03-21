@@ -1,0 +1,98 @@
+10
+
+dir
+5
+https://server-svn:8443/svn/callcenter/system/database/drivers
+https://server-svn:8443/svn/callcenter
+
+
+
+2016-03-21T03:03:25.905021Z
+1
+linhtran
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1bab1823-f4e9-2147-838c-aea735f8bd95
+
+mysql
+dir
+
+odbc
+dir
+
+cubrid
+dir
+
+sqlsrv
+dir
+
+index.html
+file
+
+
+
+
+2016-03-21T08:04:55.365683Z
+c92aa5f16d78423a983a5d7ae44428e4
+2016-03-21T03:03:25.905021Z
+1
+linhtran
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+131
+
+mysqli
+dir
+
+mssql
+dir
+
+sqlite
+dir
+
+oci8
+dir
+
+pdo
+dir
+
+ibase
+dir
+
+postgre
+dir
+
+sqlite3
+dir
+

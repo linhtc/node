@@ -1,0 +1,672 @@
+<?php
+include_once('post.php'); 
+function exception_error_handler($errno, $errstr, $errfile, $errline) {
+    if (stristr($errstr, "DB Error") == TRUE) {
+        throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+    }
+}
+set_error_handler("exception_error_handler");
+
+class ServiceLibDbAccess {
+	public function loginToCEW($username, $password, $site='att'){
+		$url = 'https://att-di.erecyclingcorps.com/api/user/authorization';
+		if($site != 'att'){ $url = 'https://vzw-di.erecyclingcorps.com/api/user/authorization'; }
+		$request = new stdClass();
+		$request->username = $username;
+		$request->password = $password;
+		$request = json_encode($request); //print_r($request); exit;
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_USERPWD, "hyla_authorization_api:gnLFCu");
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		$response = curl_exec($ch);
+		curl_close($ch);
+		$response = json_decode($response, true);
+		if(is_array($response) && isset($response[0])){ return $response[0]; }
+		if($site == 'att'){ $response = $this->loginToCEW($username, $password, 'vzw'); }
+		return $response;
+	}
+	public function checkLoginFromCloud($username, $password){
+		global $db;
+		try{
+			$sql    =   " 
+				SELECT u.id userid, u.username, u.fullname, u.email, u.groupid,u.avatar, u.permission, u.company, u.sites, u.company, u.website,
+				u.phone, u.location, u.shifts , u.birthday, g.group_name, g.grouptype, g.isadmin, g.permission, g.id as groupid, g.customerid
+				FROM gcs_users u
+				left join gcs_groups g on u.groupid = g.id
+				where u.status = 1
+				and u.isdelete = 0
+				and u.username = '$username'
+				and u.password = '$password'
+				;
+			";
+			$query = $db->selectdata($sql, array());
+			if(count($query) < 1){ return 0; } else{ $query = $query[0]; }
+			if(!empty($query['username'])){
+				#region thay đổi id = router
+					$sql_menu = " SELECT route, id FROM gcs_menus WHERE isdelete = 0; ";
+					$menu =   $db->selectdata($sql_menu, array());
+					$arr_menu = array();
+					foreach($menu as $item){ $arr_menu[$item['id']] = $item['route']; }
+					$obj_route =  array();
+					$arr_process = array(); $arr_process_end = array();
+					if(!empty($query['permission'])){
+						$sqlProcess = " SELECT m.id, m.name, m.processid FROM gcs_menus m WHERE m.processid > 0 ORDER BY m.ordering; ";
+						$processList = $db->selectdata($sqlProcess, array());
+						foreach($processList as $item){ if(!isset($arr_process[$item['id']])){ $arr_process[$item['id']] = array('processid'=>$item['processid'], 'name'=>$item['name'], 'right'=>0); } }
+						$permission = json_decode($query['permission'],true);
+						foreach($permission as $key=>$val){ if(isset($arr_menu[$key])){ $obj_route[$arr_menu[$key]] = $val; } if(isset($arr_process[$key])){ $arr_process[$key]['right'] = 1; } }
+						foreach($arr_process as $key=>$item){ if($item['right'] == 1){ $arr_process_end[$key] = $arr_process[$key]; } }
+					}
+				#end region menu
+				$arr_result = array();
+				foreach($query as $key=>$val){ if($key == 'permission'){ continue; } else{ $arr_result[$key] = $val; } }
+				$arr_result['right'] = $obj_route;
+				$arr_result['process'] = $arr_process_end;
+				return $arr_result;
+			}
+			else{
+				return 0;
+			}
+			
+		}
+		catch(Exception  $e){
+            return ERROR;
+        }
+	}
+	public function getListMenuFromCloud($login,$arrUrl,$uris){
+		global $db;
+		try{
+			$groupid = $login['groupid'];
+			$sql = "
+				SELECT g.id, g.permission
+				FROM gcs_groups g
+				WHERE g.isdelete = 0
+				and g.id = '$groupid'
+			";	
+			//$query = $cn->fetchAssoc($sql);
+			$query =   $db->selectdata($sql, array());
+			if(count($query) > 0){
+				$query = $query[0];
+			}
+			$permission = json_decode($query['permission']);
+			$right = "";
+			if(count($permission) == 0){
+				return "";
+			}
+			foreach($permission as $key=>$val){
+				$right.= ",".$key;
+			}
+			$right = substr($right,1);
+			#region Tìm parent
+			
+			$uris2 = substr($uris,1,-1);
+			if($uris2 == "admin/dashboard/" || $uris == "/admin/user/profile" || $uris == "/iZap/productivity" || $uris == "/iZap/phone-history"){
+				$uris2 = substr($uris,1);
+			}
+			//var_dump($uris2);die;
+			$sql_uri = "
+				SELECT m.parent
+				FROM gcs_menus m
+				WHERE m.isdelete = 0
+				and m.uris = '$uris2'
+			";	
+			//$query_uri = $cn->fetchAssoc($sql_uri);
+			$query_uri =   $db->selectdata($sql_uri, array());
+			if(count($query_uri) > 0){
+				$query_uri = $query_uri[0];
+			}
+			if(isset($query_uri['parent'])){
+				$parent = $query_uri['parent'];
+			}
+			else{
+				$parent = -1;
+			}
+			#end
+			$sql    =   " 
+				SELECT m.name, m.parent, m.route, m.id, m.classicon, m.urls, m.uris
+				FROM gcs_menus m                      
+				WHERE m.parent = 0
+				and m.isdelete = 0 
+				order by m.ordering ASC
+			";
+			//$result =   $cn->fetchAll($sql);
+			$result =   $db->selectdata($sql, array());
+			#region menu
+			$menu = '';
+			foreach($result as $item){
+				$itemUris = '';
+				if(isset($arrUrl[$item['urls']])){
+					$itemUris = str_replace('/', '_', $arrUrl[$item['urls']]);
+				}
+				$asub = $this->getChildrenMenuFromCloud($item['id'],$right,$arrUrl,$uris);
+				if(empty($item['classicon'])){
+					$classicon = 'fa-folder-o';
+				}
+				else{
+					$classicon = $item['classicon'];
+				}
+				if($parent == $item['id']){
+					//$active = 'class="active '.$itemUris.'"';
+					$active = 'class=" '.$itemUris.'"';
+				}
+				else{
+					$active = 'class="'.$itemUris.'"';
+				}
+				if($asub){
+					$menu.='<li '.$active.'><a href="javascript:;"><i class="fa '.$classicon.'"></i>
+							<span class="title">'.$item['name'].'</span><span class="arrow "></span></a>';
+					$menu.=' <ul class="sub-menu">';
+					$menu.=$asub;
+					$menu.='</ul></li>';   
+				}
+				else{
+					if($item['urls'] == 'gcs_admin_homepage' && in_array($item['id'],explode(',',$right))){
+						$select_uris = "/".$item['uris']."/";
+						if($select_uris == $uris){
+							//$active = 'class="active '.$itemUris.'"';
+							$active = 'class=" '.$itemUris.'"';
+						}
+						else{
+							$active = 'class="'.$itemUris.'"';
+						}
+						if($item['urls'] != '#'){
+							//$link = $isthis->generateUrl($item['urls']);
+							$link = '';
+							if(isset($arrUrl[$item['urls']])){
+								$link = $arrUrl[$item['urls']];
+							}
+						}	
+						else{
+							$link = 'javascript:;';
+						}
+						$menu.="<li $active><a href='".$link."'><i class='fa ".$classicon."'></i><span class='title'>".$item['name']."</span></a></li>";  
+					}
+				}
+			}
+			return $menu;	
+			#end
+		}
+		catch(Exception  $e){
+            return ERROR;
+        }
+	}
+	private function getChildrenMenuFromCloud($id, $right,$arrUrl,$uris){
+		global $db;
+		try{
+			$sql =  " 
+				SELECT m.name, m.parent, m.route, m.id, m.classicon, m.urls, m.processid,m.uris
+				FROM gcs_menus m                      
+				WHERE m.parent = $id
+				AND (
+					m.id IN ($right) OR
+					m.id IN (SELECT mm.parent FROM gcs_menus mm WHERE mm.id IN ($right))
+				)
+				and m.isdelete = 0
+				order by m.ordering ASC
+			";
+			//$children =   $cn->fetchAll($sql);
+			$children =   $db->selectdata($sql, array());
+			$menu = '';
+			foreach($children as $item){
+				$itemUris = '';
+				if(isset($arrUrl[$item['urls']])){
+					$itemUris = str_replace('/', '_', $arrUrl[$item['urls']]);
+				}
+				 $asub = $this->getChildrenMenuFromCloud($item['id'],$right,$arrUrl,$uris);   
+				 if(empty($item['classicon'])){
+					$classicon = 'fa-folder-o';
+				 }
+				 else{
+					$classicon = $item['classicon'];
+				 }
+				 //print_r($uris); exit;
+				 $select_uris = "/".$item['uris']."/";
+				 if($select_uris == $uris){
+					$active = 'class="active '.$itemUris.'"';
+				 }
+				 else{
+					//print_r($uris.'--->'.$item['uris']); 
+					
+					//exit;
+					if(substr($uris,1) ==  $item['uris']){
+						//$active = 'class="active '.$itemUris.'"';
+						$active = 'class=" '.$itemUris.'"';
+					}
+					else{
+						$active = 'class="'.$itemUris.'"';
+					}
+				 }
+				 
+				 if($asub){
+					$menu.="<li $active> <a href='javascript:;'>
+								<i class='fa $classicon'></i><span class='title'>".$item['name']."</span><span class='arrow '></span></a>";
+					$menu.='<ul class="sub-menu">';
+					$menu.=$asub;
+					$menu.='</ul></li>';  
+				 }
+				 else{
+					if(!empty($item['processid'])){
+						$processid = $item['processid'];
+					}
+					else{
+						$processid = "";
+					}
+					if($item['urls'] != '#'){
+						//$link = $isthis->generateUrl($item['urls']).$processid;
+						$link = '';
+						if(isset($arrUrl[$item['urls']])){
+							$link = $arrUrl[$item['urls']].$processid;
+						}
+					}	
+					else{
+						$link = 'javascript:;';
+					}
+					
+					if(strpos($active, 'active') !== false){
+						//$active = 'class="active '.$itemUris.$processid.'"';
+						$active = 'class=" '.$itemUris.$processid.'"';
+					}
+					else{
+						$active = 'class="'.$itemUris.$processid.'"';
+					}
+					
+					//$link = $isthis->generateUrl($item['urls']).$processid;
+					$menu.= "<li $active><a href='".$link."'><i class='fa $classicon'></i><span class='title'>".$item['name']."</span></a></li>"; 
+				 }
+			}
+			return $menu;
+		}
+		catch(Exception  $e){
+            return ERROR;
+        }
+    }
+    public function getCompanyManager($username){
+		global $db;
+        try{
+			$sql = "
+				SELECT cm.companies
+				FROM gcs_company_management cm
+				WHERE cm.username = '$username' AND cm.deleted = 0
+				;
+			";
+			$result = $db->selectdata($sql, array()); //echo $sql; exit;
+			return !empty($result[0]['companies']) ? $result[0]['companies'] : '';
+		}
+        catch(Exception $e){
+            return ERROR;
+        }
+	}
+	public function insertUserDashboard($username, $password, $role){
+		global $db;
+        try{
+			$sql = "
+				SELECT *
+				FROM gcs_users u
+				WHERE u.username = '".$username."'
+			";
+			$result = $db->selectdata($sql, array());
+			if(count($result) > 0){
+				return 1;
+			}
+			$sql = "
+				SELECT *
+				FROM gcs_users u
+				WHERE u.username = '".$role."'
+			";	
+			$result = $db->selectdata($sql, array());
+			if(count($result) > 0){
+				$salt = "s+(_a*";
+				$password = $password.'{'.$salt.'}';  
+				$password = base64_encode(hash("md5", $password, true));
+				$sql = "
+					INSERT INTO gcs_users (username, `password`, fullname, groupid, location, shifts, sites, isdelete)
+					VALUES ('".$username."', '".$password."', 'Hyla User', ".$result[0]['groupid'].", 
+					'".$result[0]['location']."', '".$result[0]['shifts']."', '".$result[0]['sites']."', 0)
+				";
+				$db->querydata($sql, array());
+				return 1;
+			}
+		}
+        catch(Exception $e){
+            return ERROR;
+        }
+	}
+	public function insertUserMachineLoginFailed($username, $password, $stationsn){
+		global $db;
+        try{
+			$sql = "
+				INSERT INTO gcs_login_failed_log (
+					username, password, station_serial
+				) 
+				VALUES ('".$username."', '".$password."', '".$stationsn."') 
+			";
+			$db->querydata($sql, array());
+			return 1;
+		}
+        catch(Exception $e){
+            return ERROR;
+        }
+	}
+	public function dropdownCustomerList($customerList = ''){
+		global $db;
+		try{
+			$criteria = '';
+			if(!empty($customerList)){ $criteria .=  ' AND u.id IN('.$customerList.')'; }
+			$sql = "
+				SELECT u.id, u.company_name customer_name
+				FROM gcs_user u
+				WHERE (u.parent_id = 1 OR u.id = u.parent_id) AND u.delif = 0 $criteria
+				ORDER BY u.company_name
+				;
+			";
+			return $db->selectdata($sql);
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function dropdownMachineList($customerList = '', $locationList = '', $typeList = ''){
+		global $db;
+		try{
+			$criteria = '';
+			if($customerList){
+				$criteria .= ' AND so.user_name IN('.$customerList.')';
+			}
+			if($locationList){
+				$criteria .= ' AND s.location_id IN('.$locationList.')';
+			}
+			if($typeList){
+				$criteria .= ' AND s.station_type IN('.$typeList.')';
+			}
+			$sql = " 	
+				SELECT s.station_serial, so.user_name customerid, s.station_type
+				FROM gcs_station s 
+				INNER JOIN gcs_station_owner so ON s.id = so.stationid 
+				WHERE s.del_if = 1 AND so.owner_status = 1 $criteria
+			"; //echo $sql; exit;
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function dropdownOperatorList($customerList = ''){
+		global $db;
+		try{
+			$criteriaC = '';
+			$criteriaU = '';
+			if(!empty($customerList)){ 
+				$criteriaC .=  ' AND c.id IN('.$customerList.')'; 
+				$criteriaU .=  ' AND u.parent_id IN('.$customerList.')'; 
+			}
+			$sql = "
+				SELECT c.id, c.username, 1 AS parent_id, c.company_name AS 'name_obj'
+				FROM gcs_user c
+				WHERE c.delif = 0 AND c.parent_id = 1 $criteriaC
+				UNION
+				SELECT id, username, parent_id, CONCAT_WS(' ', u.firstname, u.lastname) 
+				FROM gcs_user u
+				WHERE u.delif = 0 AND u.parent_id <> 1 $criteriaU
+				;
+			";
+			return $db->selectdata($sql);
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function dropdownModelList(){
+		global $db;
+		try{
+			// $sql = " 	
+				// SELECT m.id, m.model_name
+				// FROM gcs_model m
+				// LEFT JOIN gcs_vendor v ON v.id = m.vendor_id 
+				// WHERE m.del_if = 0
+				// ORDER BY m.model_name;
+			// ";
+			$sql = " 	
+				SELECT m.id, m.model_name
+				FROM gcs_model m
+				ORDER BY m.model_name;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function dropdownDashboardUserList(){
+		global $db;
+		try{
+			$sql = "
+				SELECT u.username, u.fullname
+				FROM gcs_users u
+				WHERE u.isdelete = 0
+				;
+			";
+			return $db->selectdata($sql);
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function getCompanyManagerList($search){
+		global $db;
+		try{
+			$username = isset($search->username) ? $search->username : '';
+			$companies = isset($search->customer) ? $search->customer : '';
+			$limit = isset($search->start) ? "LIMIT ".$search->start.", 10" : '';
+			$criteria = '';
+			
+			if(!empty($username)){
+				$criteria .= " AND cm.username IN ($username) ";
+			}
+			if(!empty($companies)){
+				$criteria .= " AND cm.companies = IN ($companies) ";
+			}
+			$sql = "
+				SELECT *
+				FROM (
+					SELECT cm.id, cm.username, cm.companies
+					FROM gcs_company_management cm
+					WHERE deleted = 0 $criteria
+					$limit
+				) rs
+				UNION
+				SELECT COUNT(*) total, 1 as 'username', 1 as 'companies'
+				FROM gcs_company_management m
+				WHERE deleted = 0 $criteria;
+			"; //echo $sql; exit;
+			$list = $db->selectdata($sql, array());
+			$total = isset($list[count($list) - 1]['id']) ? $list[count($list) - 1]['id'] : 0;
+			unset($list[count($list) - 1]);
+			return array('LIST' => $list, 'TOTAL' => $total);
+		} catch(Exception $e){
+			return array();
+		}
+	}
+	public function saveCompanyManager($id = '', $search){
+		global $db;
+		try{
+			$username = $search->username;
+			$companyList = $search->customer;
+			if(empty($id)){
+				$sql = "SELECT cm.username FROM gcs_company_management cm WHERE cm.username = '$username';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return 'Existed'; } else{
+					$sql = "INSERT INTO gcs_company_management(username, companies) VALUES('$username', '$companyList');";
+					$db->querydata($sql);
+					return 'Save success!';
+				}
+			} else{
+				$sql = "SELECT cm.username FROM gcs_company_management cm WHERE cm.username = '$username' AND cm.id <> '$id';";
+				$existed = $db->selectdata($sql);
+				if(!empty($existed[0])){ return 'Existed'; } else{
+					$sql = "
+						UPDATE gcs_company_management cm
+						SET cm.username = '$username', companies = '$companyList'
+						WHERE cm.id = '$id';
+					";
+					$db->querydata($sql);
+					return 'Save success';
+				}
+			}
+		} catch(Exception $e){
+			return 'Error in process!';
+        }
+	}
+	public function deleteCompanyManager($id){
+		global $db;
+		try{
+			$sql = "
+				UPDATE gcs_company_management cm
+				SET deleted = 1
+				WHERE cm.id IN($id)
+				;
+			";
+			return $db->querydata($sql);
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function updateMachineToSyncList($customer, $po){
+		global $db;
+		try{
+			$sql = "
+				SELECT s.station_serial
+				FROM gcs_station s
+				INNER JOIN gcs_station_owner so ON so.stationid = s.id
+				WHERE so.owner_status = 1 AND so.user_name = '$customer' AND s.station_type = 17;
+			";
+			$stationList = $db->selectdata($sql);
+			if(count($stationList)){
+				$sql = " DELETE FROM gsi_asn_file_sync WHERE customer = '$customer' AND po = '$po'; ";
+				$db->querydata($sql);
+				$sql = "INSERT INTO gsi_asn_file_sync(`customer`,`machine_sn`, `po`, `issync`, `synced`, `time_created`)";
+				$sqlTmp = '';
+				foreach($stationList as $item){
+					$stationSerial = $item['station_serial'];
+					$sqlTmp .= ($sqlTmp == '' ? 'VALUES' : ',') . "('$customer', '$stationSerial', '$po', 1, 0, NOW())";
+				}
+				if(!empty($sqlTmp)){
+					$sql.=$sqlTmp.';';
+					$result = $db->querydata($sql);
+					return $result;
+				}
+			}
+			return true;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function updateASNLogSyncList($username, $customer, $po, $file){
+		global $db;
+		try{
+			$sql = " DELETE FROM gsi_asn_file_log WHERE customer = '$customer' AND po = '$po'; ";
+			$db->querydata($sql);
+			$sql = "
+				INSERT INTO gsi_asn_file_log(`po`, `customer`, `user_imported`, `time_imported`, `file_imported`)
+				VALUES('$po', '$customer', '$username', NOW(), '$file');
+			";
+			$result = $db->querydata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function getASNFileLogTotal(){
+		global $db;
+		try{
+			$sql = "
+				SELECT COUNT(1) total
+				FROM gsi_asn_file_log;
+			";
+			$result = $db->selectdata($sql);
+			return !empty($result[0]['total']) ? $result[0]['total'] : 0;
+		} catch(Exception $e){
+			return 0;
+        }
+	}
+	public function getASNFileLogList(){
+		global $db;
+		try{
+			$sql = "
+				SELECT *
+				FROM gsi_asn_file_log
+				ORDER BY id DESC;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function getASNFileDetail($customer, $po){
+		global $db;
+		try{
+			$sql = "
+				SELECT *
+				FROM gsi_asn_file_sync s
+				WHERE s.customer = '$customer' AND s.po = '$po'
+				ORDER BY s.machine_sn;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return array();
+        }
+	}
+	public function getMachineToSyncData($start, $limit = 100){
+		global $db;
+		try{
+			$sql = "
+				SELECT 	rs.id, rs.station_serial, rs.station_type, rs.locationid, rs.customerid,
+					(SELECT REPLACE(l.time_zone, 'UTC ', '') FROM gcs_location l WHERE l.id = rs.locationid) timezone
+				FROM(
+					SELECT s.id, s.station_serial, s.location_id locationid, s.last_login, so.user_name customerid,
+						s.station_type
+					FROM gcs_station s INNER JOIN gcs_station_owner so ON so.stationid = s.id
+					WHERE so.owner_status = 1 AND s.station_type = 17 AND s.del_if = 1
+					LIMIT $start, $limit
+				) rs
+				/*WHERE rs.last_login >= DATE_SUB(NOW(), INTERVAL 12 HOUR)*/;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	public function getZlogToSyncData($start, $zlog){
+		global $db;
+		try{
+			$sql = "
+				SELECT *
+				FROM $zlog z
+				WHERE z.erase_id > $start
+				LIMIT 100;
+			";
+			$result = $db->selectdata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+	
+	public function generateUniqueID(){
+		return uniqid (GENERATE_SERVER, true); // the constant is defined in define.php
+	}
+	public function executeQuery($sql){
+		global $db;
+		try{
+			$result = $db->querydata($sql);
+			return $result;
+		} catch(Exception $e){
+			return false;
+        }
+	}
+}
+?>
