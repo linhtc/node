@@ -1,0 +1,6 @@
+var postString = 'loginfmt=itestgreystone@hotmail.com\n\
+&passwd=abc123ABC&KMSI=1\n\
+&login=itestgreystone@hotmail.com\n\
+&type=11\n\
+&PPFT=DakXxBsyt!ZnOLQ4OmLyprgIeNQXlcoQLulDVGAfvKunAsxpPKYcphi4W07vOMztizTPFY0zlyrzQlNHepdGDMXXbmjpwRkyQpGaIUjERmNK8orqy6LRkze2ydBa10JAB!lys5yXHaJiplO9mn6uFyfx*X04ZmnFX*UAixdy*G5Fk5VcDahIjO6VOKu2j9OiGSKRCjUhPl9CYUNSwVW8xp8d97l0g*kzn1jGFxWKcQYgIr2n20r1pL5SjU7Zhjofxu6l6gRgeSJ2sAgO*hcMOXI$&PPSX=Pass&idsbho=1&sso=0&NewUser=1&LoginOptions=1&i1=0&i2=1&i3=28722&i4=0&i7=0&i12=1&i13=1&i14=343&i15=1280&i17=0&i18=__Login_Strings|1,__Login_Core|1,&i16={"navigationStart":1456370184342,"unloadEventStart":0,"unloadEventEnd":0,"redirectStart":0,"redirectEnd":0,"fetchStart":1456370184342,"domainLookupStart":1456370184364,"domainLookupEnd":1456370184367,"connectStart":1456370184367,"connectEnd":1456370184367,"requestStart":1456370185336,"responseStart":1456370185570,"responseEnd":1456370185572,"domLoading":1456370185580,"domInteractive":1456370187410,"domContentLoadedEventStart":1456370187411,"domContentLoadedEventEnd":1456370187579,"domComplete":1456370187581,"loadEventStart":1456370187581,"loadEventEnd":1456370187659}&i19=28726';
+                            
