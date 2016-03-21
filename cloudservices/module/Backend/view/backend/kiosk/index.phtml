@@ -1,0 +1,143 @@
+<div class="row">
+    <div class="col-md-12 ">
+        <!-- BEGIN SAMPLE FORM PORTLET-->
+        <div class="portlet light bordered" id="row_ui_management">
+            <div class="portlet-title">
+                <div class="caption font-green">
+                    <i class="icon-pin font-green"></i>
+                    <span class="caption-subject bold uppercase"> Gian hàng</span>
+                </div>
+                <div class="actions">
+                    <?php if(isset($permission->menu_create) || $isadmin): ?>
+                    <a id="control_add" class="btn btn-circle btn-icon-only blue" href="javascript:;" title="Create">
+                    <i class="fa fa-plus"></i>
+                    </a>
+                    <?php endif; ?>
+                    <?php if(isset($permission->menu_edit) || $isadmin): ?>
+                    <a id="control_edit" class="btn btn-circle btn-icon-only green" href="javascript:;" title="Edit">
+                    <i class="icon-wrench"></i>
+                    </a>
+                    <?php endif; ?>
+                    <?php if(isset($permission->menu_remove) || $isadmin): ?>
+                    <a id="control_delete" class="btn btn-circle btn-icon-only red" href="javascript:;" title="Delete">
+                    <i class="icon-trash"></i>
+                    </a>
+                    <?php endif; ?>
+                    <?php if(isset($permission->menu_view) || $isadmin): ?>
+                    <a id="control_search"class="btn btn-circle btn-icon-only blue-madison" href="javascript:;" title="Search">
+                    <i class="fa fa-search"></i>
+                    </a>
+                    <?php endif; ?>
+                    <a id="control_reset" class="btn btn-circle btn-icon-only blue-hoki" href="javascript:;" title="Reset">
+                    <i class="fa fa-retweet"></i>
+                    </a>
+                    <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="javascript:;" data-original-title="" title="">
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body form">
+                <form role="form" id="control_form">
+                    <input id="id_edit" type="hidden" value="" />
+                    <input style="display:none;" type="file" name="kiosk_logo" id="kiosk_logo" accept="image/*">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group form-md-line-input has-success">
+                                <div class="input-icon right">
+                                    <input type="text" class="form-control search" id="customer_name" placeholder="Nhập tên gian hàng..." msgempty="Chưa nhập tên">
+                                    <label for="form_control_1">Tên</label>
+                                    <span class="help-block">Please input...</span>
+                                    <i class="fa fa-ellipsis-h"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group form-md-line-input has-success">
+                                <div class="input-icon right">
+                                    <input type="text" class="form-control search" id="address" placeholder="Nhập địa chỉ..." msgempty="Chưa nhập địa chỉ">
+                                    <label for="form_control_1">Địa chỉ</label>
+                                    <span class="help-block">Please input...</span>
+                                    <i class="fa fa-ellipsis-h"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group form-md-line-input has-success">
+                                <div class="input-icon right">
+                                    <input type="text" class="form-control search" id="phone" placeholder="Nhập điện thoại..." msgempty="Chưa nhập điện thoại">
+                                    <label for="form_control_1">Điện thoại</label>
+                                    <span class="help-block">Please input...</span>
+                                    <i class="fa fa-ellipsis-h"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group form-md-line-input has-success">
+                                <div class="input-icon right">
+                                    <input type="text" class="form-control search" id="customer_name" placeholder="Nhập email..." msgempty="Chưa nhập email">
+                                    <label for="form_control_1">Email</label>
+                                    <span class="help-block">Please input...</span>
+                                    <i class="fa fa-ellipsis-h"></i>
+                                </div>
+                            </div>
+                        </div>  
+                        <div class="col-md-8">
+                            <div class="form-group form-md-line-input has-success">
+                                <div class="input-icon right">
+                                    <input type="text" class="form-control search" id="kiosk_logo_mask" placeholder="Chọn logo..." msgempty="Chưa chọn logo">
+                                    <label for="form_control_1">Logo</label>
+                                    <span class="help-block">Please input...</span>
+                                    <i class="fa fa-ellipsis-h"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="form-actions noborder" style="display:none;">
+                        <button type="button" class="btn blue">Submit</button>
+                        <button type="button" class="btn default">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- END SAMPLE FORM PORTLET-->
+    </div>
+</div>
+<div class="clearfix">
+</div>
+<div class="row">
+    <div class="col-md-12 ">
+        <!-- BEGIN SAMPLE FORM PORTLET-->
+        <div class="portlet light bordered" id="row_ui_summary">
+            <div class="portlet-title">
+                <div class="caption font-green">
+                    <i class="icon-pin font-green"></i>
+                    <span class="caption-subject bold uppercase"> Danh sách</span>
+                </div>
+                <div class="actions">
+                    <?php if(isset($permission->menu_export) || $isadmin): ?>
+                    <a id="control_export" class="btn btn-circle btn-icon-only blue" href="javascript:;" title="Export">
+                    <i class="icon-cloud-upload"></i>
+                    </a>
+                    <?php endif; ?>
+                    <a id="control_reload" class="btn btn-circle btn-icon-only blue-hoki" href="javascript:;" title="Reload">
+                    <i class="fa fa-refresh"></i>
+                    </a>
+                    <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="javascript:;" data-original-title="" title="">
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body form">
+                <form role="form" id="control_container">
+
+                </form>
+            </div>
+        </div>
+        <!-- END SAMPLE FORM PORTLET-->
+    </div>
+</div>
+<script type="text/javascript">
+    $('#kiosk_logo_mask').click(function(){ $('#kiosk_logo').click(); });
+    $('#kiosk_logo').change(function(){ $('#kiosk_logo_mask').val($(this).val()); });
+</script>
