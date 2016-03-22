@@ -4,7 +4,7 @@ var path = require('path');
 var url  = require('url');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
-var basePath = '/var/www/html/mean/';
+var basePath = '/var/www/html/node/mean/';
 
 http.createServer(function (request, response){
     var filePath = request.url;
