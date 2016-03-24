@@ -1,0 +1,1 @@
+{"options":{},"indexes":[{"v":1,"key":{"_id":1},"name":"_id_","ns":"cloudservices.cs_kiosk"},{"v":1,"key":{"kiosk_friendly":1.0},"name":"kiosk_friendly_1","ns":"cloudservices.cs_kiosk"},{"v":1,"key":{"kiosk_unique":1.0},"name":"ix_unique","ns":"cloudservices.cs_kiosk"}]}
