@@ -5,31 +5,28 @@ backendApplication.controller('homeController', function($scope, $http, ngDialog
     // create a message to display in our view
     $scope.message = 'Home page!';
     $scope.errorMessage = '';
-    $scope.saveCookie = function(){
-        $scope.submitCookie();
-    };
     $scope.resetForm = function(){
         $scope.na = '';
         $scope.cna = '';
     };
-    $scope.submitCookie = function(){
+    $scope.saveCookie = function(){
         var na = $scope.na;
         var cna = $scope.cna;
         if(na === undefined || cna === undefined){
             $scope.errorMessage = 'Please input two cookies!';
-            ngDialog.open({ 
+            ngDialog.open({
                 template: 'backend/templates/pages/dialog/error.html',
                 className: 'ngdialog-theme-default',
                 scope: $scope
             });
-           return false; 
+           return false;
         }
         try{
             na = JSON.parse(na);
             cna = JSON.parse(cna);
         } catch(exx){
             $scope.errorMessage = exx.message;
-            ngDialog.open({ 
+            ngDialog.open({
                 template: 'backend/templates/pages/dialog/error.html',
                 className: 'ngdialog-theme-default',
                 scope: $scope
