@@ -3,11 +3,75 @@
     <h2>History Cookies</h2>
     <fieldset>
         <legend>NA12</legend>
-        <p>{{naCookie}}</p>
+        <table class="table" style="max-width: 100%;">
+            <thead>
+              <tr>
+                <th>id</th>
+                <th>name</th>
+                <th>value</th>
+                <th>domain</th>
+                <th>expirationDate</th>
+                <th>hostOnly</th>
+                <th>httpOnly</th>
+                <th>path</th>
+                <th>secure</th>
+                <th>session</th>
+                <th>storeId</th>
+              </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="item in naCookie">
+                    <td>{{item.id}}</td>
+                    <td>{{item.name}}</td>
+                    <td><input value="{{item.value}}" style="background: none; border: medium none;"
+/></td>
+                    <td>{{item.domain}}</td>
+                    <td>{{item.expirationDate}}</td>
+                    <td>{{item.hostOnly}}</td>
+                    <td>{{item.httpOnly}}</td>
+                    <td>{{item.path}}</td>
+                    <td>{{item.secure}}</td>
+                    <td>{{item.session}}</td>
+                    <td>{{item.storeId}}</td>
+                </tr>
+            </tbody>
+        </table>
     </fieldset>
     
     <fieldset>
         <legend>CNA12</legend>
-        <p>{{naCookie}}</p>
+        <table class="table" style="max-width: 100%;">
+            <thead>
+              <tr>
+                <th>id</th>
+                <th>name</th>
+                <th>value</th>
+                <th>domain</th>
+                <th>expirationDate</th>
+                <th>hostOnly</th>
+                <th>httpOnly</th>
+                <th>path</th>
+                <th>secure</th>
+                <th>session</th>
+                <th>storeId</th>
+              </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="item in cnaCookie">
+                    <td>{{item.id}}</td>
+                    <td>{{item.name}}</td>
+                    <td><input value="{{item.value}}" style="background: none; border: medium none;"
+/></td>
+                    <td>{{item.domain}}</td>
+                    <td>{{item.expirationDate}}</td>
+                    <td>{{item.hostOnly}}</td>
+                    <td>{{item.httpOnly}}</td>
+                    <td>{{item.path}}</td>
+                    <td>{{item.secure}}</td>
+                    <td>{{item.session}}</td>
+                    <td>{{item.storeId}}</td>
+                </tr>
+            </tbody>
+        </table>
     </fieldset>
 </div>
