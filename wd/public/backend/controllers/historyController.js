@@ -3,9 +3,7 @@
 // create the controller and inject Angular's $scope
 backendApplication.controller('historyController', function($scope, $http, ngDialog) {
     // create a message to display in our view
-    $scope.message = 'History page!';
-    $scope.naCookie = [];
-    $scope.cnaCookie = [];
+    $scope.cookieList = [];
     $scope.totalRecords = 0;
     $scope.historyCookie = function(){
         var option = { command:'history-cookie' };
@@ -19,8 +17,7 @@ backendApplication.controller('historyController', function($scope, $http, ngDia
     };
     
     $scope.clickToOpen = function (naCookie, cnaCookie) {
-        $scope.naCookie = naCookie;
-        $scope.cnaCookie = cnaCookie;
+        $scope.cookieList = [{name:'NA12', list:naCookie}, {name:'C.NA12', list:cnaCookie}];
         ngDialog.open({ 
             template: 'backend/templates/pages/history/detail.html',
             className: 'ngdialog-theme-plain custom-width',

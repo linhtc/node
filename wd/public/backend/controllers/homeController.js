@@ -19,7 +19,7 @@ backendApplication.controller('homeController', function($scope, $http, ngDialog
                 className: 'ngdialog-theme-default',
                 scope: $scope
             });
-           return false;
+            return false;
         }
         try{
             na = JSON.parse(na);
