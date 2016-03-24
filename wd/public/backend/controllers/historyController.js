@@ -4,12 +4,14 @@
 backendApplication.controller('historyController', function($scope, $http, ngDialog) {
     // create a message to display in our view
     $scope.message = 'History page!';
-    $scope.naCookie = 'abc';
+    $scope.naCookie = [];
+    $scope.cnaCookie = [];
+    $scope.totalRecords = 0;
     $scope.historyCookie = function(){
         var option = { command:'history-cookie' };
         $scope.cookies = {};
         $http.post('cookie', option, {}).then(function(response){
-            if(typeof response['data'] !== 'undefined'){ $scope.cookies = response.data; }
+            if(typeof response['data'] !== 'undefined'){ $scope.cookies = response.data; $scope.totalRecords = response.data.length; }
         },
         function(){
             
