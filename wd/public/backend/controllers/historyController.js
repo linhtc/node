@@ -22,8 +22,8 @@ backendApplication.controller('historyController', function($scope, $http, ngDia
         $scope.naCookie = naCookie;
         $scope.cnaCookie = cnaCookie;
         ngDialog.open({ 
-            template: 'backend/templates/pages/history/detail.html', 
-            className: 'ngdialog-theme-default',
+            template: 'backend/templates/pages/history/detail.html',
+            className: 'ngdialog-theme-plain custom-width',
             scope: $scope
         });
     };

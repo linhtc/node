@@ -1,9 +1,10 @@
 /* global backendApplication */
 
 // create the controller and inject Angular's $scope
-backendApplication.controller('homeController', function($scope, $http) {
+backendApplication.controller('homeController', function($scope, $http, ngDialog) {
     // create a message to display in our view
     $scope.message = 'Home page!';
+    $scope.errorMessage = '';
     $scope.saveCookie = function(){
         $scope.submitCookie();
     };
@@ -13,9 +14,28 @@ backendApplication.controller('homeController', function($scope, $http) {
     };
     $scope.submitCookie = function(){
         var na = $scope.na;
-        na = JSON.parse(na);
         var cna = $scope.cna;
-        cna = JSON.parse(cna);
+        if(na === undefined || cna === undefined){
+            $scope.errorMessage = 'Please input two cookies!';
+            ngDialog.open({ 
+                template: 'backend/templates/pages/dialog/error.html',
+                className: 'ngdialog-theme-default',
+                scope: $scope
+            });
+           return false; 
+        }
+        try{
+            na = JSON.parse(na);
+            cna = JSON.parse(cna);
+        } catch(exx){
+            $scope.errorMessage = exx.message;
+            ngDialog.open({ 
+                template: 'backend/templates/pages/dialog/error.html',
+                className: 'ngdialog-theme-default',
+                scope: $scope
+            });
+            return false;
+        }
         var option = { command:'save-cookie', na: na, cna:cna };
         $http.post('cookie', option, {}).then(function(response){
             console.log(response);

@@ -121,7 +121,5 @@ var generateMenuClass = function(menuList, menuDocuments, groupControl, callback
     console.log(menuDocuments);
     callback();
 };
-
-
 var getSlideViaKiosk = function(db, kioskFriendly, callback){ db.collection('cs_slide').findOne({slide_kiosk:kioskFriendly}, {fields:{_id:0}}, function(err, document) { assert.equal(null, err); callback(document); }); };
 
