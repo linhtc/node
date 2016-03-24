@@ -4,7 +4,7 @@ var path = require('path');
 var url  = require('url');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
-var basePath = '/var/www/html/wd-rma/';
+var basePath = '/var/www/html/node/wd/';
 //var basePath = '/home/gdsuser/wd-rma/';
 
 http.createServer(function (request, response){
@@ -74,6 +74,16 @@ function processServices(request, response){
                                 } else{
                                     response.end("{}");
                                 }
+                                db.close();
+                            });
+                        }); break;
+                    } 
+                    case 'history-cookie':{
+                        MongoClient.connect('mongodb://localhost:27017/wd', function(err, db) {
+                            assert.equal(null, err);
+                            db.collection('cookies').find({}).sort({time:-1}).toArray(function(err, documents){
+                                assert.equal(null, err);
+                                response.end(JSON.stringify(documents));
                                 db.close();
                             });
                         }); break;

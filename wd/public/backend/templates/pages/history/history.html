@@ -1,0 +1,21 @@
+<!-- history.html -->
+<div class="container" ng-init="historyCookie()">
+    <h2>History Cookies</h2>
+    <p>The .table class adds basic styling (light padding and only horizontal dividers) to a table:</p>            
+    <table class="table">
+        <thead>
+          <tr>
+            <th>UID</th>
+            <th>Datetime</th>
+            <th>Cookies</th>
+          </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="item in cookies">
+                <td>{{item._id}}</td>
+                <td>{{item.time | date:'yyyy-MM-dd HH:mm:ss Z'}}</td>
+                <td><button type="button" class="btn btn-default" ng-click="clickToOpen(item.na, item.cna)">View</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

@@ -5,16 +5,25 @@
 <head>
     <!-- SCROLLS -->
     <!-- load bootstrap and fontawesome via CDN -->
+    <!--
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+    -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.0/css/font-awesome.css" />
+    <link rel="stylesheet" href="backend/templates/assets/global/css/ngDialog.min.css" />
+    <link rel="stylesheet" href="backend/templates/assets/global/css/ngDialog-theme-default.min.css" />
+    <link rel="stylesheet" href="backend/templates/assets/global/css/ngDialog-theme-plain.min.css" />
 
     <!-- SPELLS -->
     <!-- load angular and angular route via CDN -->
     <script language="javascript" src="backend/components/angular.min.js"></script>
     <script language="javascript" src="backend/components/angular-route.js"></script>
+    <script language="javascript" src="backend/components/ngDialog.js"></script>
     <script language="javascript" src="backend/app.js"></script>
     <script language="javascript" src="backend/controllers/homeController.js"></script>
     <script language="javascript" src="backend/controllers/aboutController.js"></script>
+    <script language="javascript" src="backend/controllers/historyController.js"></script>
     
     <title data-ng-bind="page.title"></title>
     <!-- Enable pretty routing -->
@@ -31,6 +40,7 @@
 
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="/"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="/history"><i class="fa fa-shield"></i> History</a></li>
                 <li><a href="/about"><i class="fa fa-shield"></i> About</a></li>
             </ul>
         </div>

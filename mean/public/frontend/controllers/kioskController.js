@@ -40,7 +40,7 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
     };
     $scope.quickView = function(product){
         console.log(product);
-    }
+    };
     $scope.getBannerSlide = function(){
         var commandOption = {
             'command':'get-slide',

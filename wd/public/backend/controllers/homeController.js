@@ -19,7 +19,7 @@ backendApplication.controller('homeController', function($scope, $http) {
         var option = { command:'save-cookie', na: na, cna:cna };
         $http.post('cookie', option, {}).then(function(response){
             console.log(response);
-			if(response.data === 'OK'){ $scope.na = ''; $scope.cna = ''; }
+            if(response.data === 'OK'){ $scope.na = ''; $scope.cna = ''; }
         },
         function(){
             
