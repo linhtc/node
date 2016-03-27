@@ -377,7 +377,7 @@ $(document).ready(function() {
 		element.innerHTML = html;
 	}
 	
-	twitterFetcher.fetch(twitterOptions);
+	//twitterFetcher.fetch(twitterOptions);
 	
 	/*------------------------------
 		GOOGLE MAP
@@ -407,58 +407,6 @@ $(document).ready(function() {
 	var zoom = 13;
 	if($(window).width() < 768) {
 		zoom = zoom - 1;
-	}
-	
-	// GOOGLE MAP INIT
-	function initialize($) {
-		var mapOptions = {
-		  	zoom: zoom,
-		  	center: regions[0],
-		  	navigationControl: false,
-		  	mapTypeControl: false,
-		  	scaleControl: false,
-		  	draggable: true,
-			scrollwheel: false
-		}
-		map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
-		google.maps.event.addListenerOnce(map, 'idle', putmarkers);
-	}
-	
-	function putmarkers($) {	
-		for (var i = 0; i < coordinates.length; i++) {
-			addMarkerWithTimeout(coordinates[i][0], coordinates[i][1], i+1, i * 400);
-		}
-	}
-	
-	if($("#map-canvas").length) {
-		google.maps.event.addDomListener(window, 'load', initialize);
-	}
-	
-	function addMarkerWithTimeout(position, text, store, timeout) {
-	  	window.setTimeout(function() {
-			
-			var marker = new google.maps.Marker({
-				position: position,
-		  		map: map,
-				title: text,
-				url: "#marker-" + store,
-		  		animation: google.maps.Animation.DROP
-			});
-					
-			google.maps.event.addListener(marker, 'click', function() {
-				scrollToObj(marker.url, 80, 800);
-			});
-			
-			google.maps.event.addListener(marker, 'mouseover', function (event) {
-				$("#map-tooltip").html("<p>" + marker.title + "</p>");
-			});
-			
-			google.maps.event.addListener(marker, 'mouseout', function (event) {
-				$("#map-tooltip").html('');
-			});
-						
-			markers.push(marker);
-	  	}, timeout);
 	}
 				
 	$('#change-region').change(function(e) {
@@ -493,11 +441,11 @@ $(window).load(function () {
 	------------------------------*/
 	if(typeof(Storage) !== "undefined") {
 		if(localStorage.getItem("modalhidden") !== "hidden") {
-			$('#modalAdvertising').modal('show');
+			//$('#modalAdvertising').modal('show');
 		}
 	}
 	else {
-		$('#modalAdvertising').modal('show');
+		//$('#modalAdvertising').modal('show');
 	}
 });
 

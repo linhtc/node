@@ -1,0 +1,221 @@
+<section class="breadcrumb-wrapper">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-6">
+                <h2>Sản phẩm</h2>
+                <p>{{productDetail.product_name}}</p>
+            </div>
+            <div class="col-xs-6">
+                <ol class="breadcrumb">
+                    <li ng-repeat="breadcrumb in productCategoryDetail"><a href="{{breadcrumb.category_key}}">{{breadcrumb.category_value}}</a></li>
+                    <li class="active">{{productDetail.product_name}}</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content products">
+        <div class="container">
+        	<article class="product-item product-single">
+                <div class="row">
+                    <div class="col-xs-4">
+                        <div class="product-carousel-wrapper">
+                            <div class="owl-carousel owl-theme owl-loaded" id="product-carousel">
+                                <div class="owl-stage-outer">
+                                    <div style="" class="owl-stage">
+                                        <div style="width: 355px; margin-right: 0px;" class="owl-item" ng-show="tabShowProductSlide[$index]" ng-repeat="productSrc in productDetail.product_slide track by $index">
+                                            <div class="item"><img src="{{productSrc}}" class="img-responsive" alt=""></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="owl-controls">
+                                    <div class="owl-dots" style="">
+                                        <div class="owl-dot" ng-click="tabShowProductSlideSubmit($index)" ng-class="{'active':tabShowProductSlide[$index] === 1}" ng-repeat="productSrc in productDetail.product_slide track by $index"><span></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-8">
+                    	<div class="product-body">
+                            <h3>{{productDetail.product_name}}</h3>
+                            <div class="product-labels">
+                                <span class="label label-info">new</span>
+                                <span class="label label-danger">sale</span>
+                            </div>
+                            <div class="product-rating">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                            </div>
+                            <span class="price">
+                                <del><span class="amount">{{productDetail.product_price | number:0}} Đ</span></del>
+                                <ins><span class="amount">{{productDetail.product_saleoff | number:0}} Đ</span></ins>
+                            </span>
+                            <ul class="list-unstyled product-info">
+                                <li><span>ID</span>{{productDetail._id}}</li>
+                                <li><span>Tình trạng</span>Còn hàng</li>
+                                <li><span>Thương hiệu</span>{{productDetail.product_manufacturer.manufacturer_value}}</li>
+                                <li><span>Tags</span>Dress, Black, Women</li>
+                            </ul>
+                            <p>{{productDetail.product_short_description}}</p>
+                            <div class="product-form clearfix">
+                                <div class="row row-no-padding">
+                                    
+                                    <div class="col-md-3 col-sm-4">
+                                        <div class="product-quantity clearfix">
+                                            <a class="btn btn-default" id="qty-minus">-</a>
+                                            <input class="form-control" id="qty" value="1" type="text">
+                                            <a class="btn btn-default" id="qty-plus">+</a>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3 col-sm-4" ng-repeat="attribute in productDetail.product_attribute">
+                                        <div class="product-size">
+                                            <form class="form-inline">
+                                                <div class="form-group">
+                                                    <label>{{attribute.name}}:</label>
+                                                </div>
+                                                <div class="form-group">
+                                                    <select class="form-control">
+                                                        <option ng-repeat="attributeValue in attribute.value track by $index">{{attributeValue}}</option>
+                                                    </select>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3 col-sm-12">
+                                    	<a href="" class="btn btn-primary add-to-cart"><i class="fa fa-shopping-cart"></i>Thêm vào giỏ</a>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            <ul class="list-inline product-links">
+                                <li><a href="#"><i class="fa fa-heart"></i>Tôi yêu sản phẩm này</a></li>
+                                <li><a href="#"><i class="fa fa-exchange"></i>So sánh</a></li>
+                                <li><a href="#"><i class="fa fa-envelope"></i>Giới thiệu cho bạn tôi</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            
+            <div class="tabs product-tabs">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li role="presentation" class="active" ng-class="{'active':tabShow['description'] === 1}" style="cursor: pointer;"><a role="tab" data-toggle="tab" aria-controls="description" ng-click="tabShowSubmit('description')" aria-expanded="true">Mô tả</a></li>
+                    <li role="presentation" class="" ng-class="{'active':tabShow['reviews'] === 1}" style="cursor: pointer;"><a role="tab" data-toggle="tab" aria-controls="reviews" ng-click="tabShowSubmit('reviews')" aria-expanded="false">Bình luận</a></li>
+                    <li role="presentation" class="" ng-class="{'active':tabShow['video'] === 1}" style="cursor: pointer;"><a role="tab" data-toggle="tab" aria-controls="video" ng-click="tabShowSubmit('video')" aria-expanded="false">Video sản phẩm</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="description" ng-show="tabShow['description']">
+                    {{productDetail.product_full_description}}
+                    </div>
+                    <div role="tabpanel" class="tab-pane active" id="reviews" ng-show="tabShow['reviews']">
+                        <div class="comments" ng-repeat="comment in productDetail.product_comment">
+                            <!-- REVIEW - START -->
+                        	<div class="media">
+                            	<div class="media-left">
+                                    <img class="media-object" alt="" src="/frontend/templates/assets/images/default-avatar.png">
+                              	</div>
+                              	<div class="media-body">
+                                    <h3 class="media-heading">{{comment.comment_name}}</h3>
+                                    <div class="meta">
+                                    	<span class="date">{{comment.comment_time | date:'medium'}}</span>
+                                        <a data-toggle="modal" data-target="#add-review">Trả lời</a>
+                                    </div>
+                                    <p>{{comment.comment_text}}</p>
+                              	</div>
+                            </div>
+                            <!-- REVIEW - END -->
+                        </div>
+                        
+                        <a class="btn btn-primary btn-lg" data-toggle="modal" data-target="#add-review">Tham gia bình luận</a>
+
+                    </div>
+                    <div role="tabpanel" class="tab-pane active" id="video" ng-show="tabShow['video']">
+                    	<div class="embed-responsive embed-responsive-16by9">
+                            <iframe allowfullscreen="" src="http://www.youtube.com/embed/M4z90wlwYs8?feature=player_detailpage"></iframe>
+                        </div>
+                    </div>
+                </div>
+          	</div>
+            
+            <div class="releated-products">
+            	<h2>Tôi cũng quan tâm</h2>
+            	<div class="row grid" id="products">
+                        
+                    <!-- PRODUCT - START -->
+                    <div class="col-sm-3 col-xs-6" ng-repeat="product in productListRelated">
+                        <article class="product-item">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <div class="product-overlay">
+                                        <div class="product-mask"></div>
+                                        <a href="{{kioskFriendly+'/san-pham/'+product.product_friendly}}" class="product-permalink"></a>
+                                        <img src="{{product.product_image}}" class="img-responsive" alt="">
+                                        <div class="product-quickview">
+                                            <a class="btn btn-quickview" data-toggle="modal" data-target="#product-quickview">Quick View</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-9">
+                                    <div class="product-body">
+                                        <h3>{{product.product_name}}</h3>
+                                        <span class="price">
+                                            <del><span class="amount">{{product.product_price | number:0}} Đ</span></del>
+                                            <ins><span class="amount">{{product.product_saleoff | number:0}} Đ</span></ins>
+                                        </span>
+                                        <p>{{product.product_short_description}}</p>
+                                        <div class="buttons buttons-simple">
+                                            <a href=""><i class="fa fa-exchange"></i></a>
+                                            <a href=""><i class="fa fa-shopping-cart"></i></a>
+                                            <a href=""><i class="fa fa-heart"></i></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                    <!-- PRODUCT - END -->
+                    
+            	</div>
+            </div>
+            
+        </div>
+    </section>
+
+<section class="separator separator-newsletter">
+    <div class="container">
+        <div class="newsletter-left">
+            <div class="newsletter-badge">
+                <span>Theo dõi &amp; nhận </span>
+                <span class="price">15%</span>
+                <span>giảm giá</span>
+            </div>
+        </div>
+        <div class="newsletter-right">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="newsletter-body">
+                        <h3>Đăng ký theo dõi</h3>
+                        <p>Gửi những sản phẩm mới của Cửa hàng cho tôi</p>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <form>
+                        <div class="input-group input-group-lg">
+                            <input class="form-control" placeholder="Email của tôi" type="email">
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary" type="button">Đăng ký ngay</button>
+                            </span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -164,7 +164,51 @@ function processServices(request, response){
                                 response.end(JSON.stringify(documents));
                             });
                         }); break;
-                    } default:{ response.writeHead(200); response.end(JSON.stringify({message:'error'})); }
+                    }
+                    case 'get-detail':{
+                        var productFriendly = requestData.product_friendly;
+                        MongoClient.connect('mongodb://localhost:27017/cloudservices', function(err, db) {
+                            assert.equal(null, err);
+                            getProductDetail(db, kioskFriendly, productFriendly, function(documents){
+                                response.writeHead(200, { 'Content-Type': 'application/json' });
+                                response.end(JSON.stringify(documents));
+                            });
+                        }); break;
+                    }
+                    case 'get-related':{
+                        var productFriendly = requestData.product_friendly;
+                        MongoClient.connect('mongodb://localhost:27017/cloudservices', function(err, db) {
+                            assert.equal(null, err);
+                            getProductRelated(db, kioskFriendly, productFriendly, function(documents){
+                                response.writeHead(200, { 'Content-Type': 'application/json' });
+                                response.end(JSON.stringify(documents));
+                            });
+                        }); break;
+                    }
+                    default:{ response.writeHead(200); response.end(JSON.stringify({message:'error'})); }
+                }
+            }); break;
+        }
+        case '/manufacturer':{
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            var requestDataTmp = "";
+            request.on('data', function (chunk){ requestDataTmp += chunk; });
+            request.on('end', function () {
+                var requestData = JSON.parse(requestDataTmp);
+                var commandTmp = requestData.command;
+                var kioskFriendly = requestData.kiosk_friendly;
+                console.log(kioskFriendly);
+                switch(commandTmp){
+                    case 'get-list':{
+                        MongoClient.connect('mongodb://localhost:27017/cloudservices', function(err, db) {
+                            assert.equal(null, err);
+                            getManufacturerList(db, kioskFriendly, function(documents){
+                                response.writeHead(200, { 'Content-Type': 'application/json' });
+                                response.end(JSON.stringify(documents));
+                            });
+                        }); break;
+                    }
+                    default:{ response.writeHead(200); response.end(JSON.stringify({message:'error'})); }
                 }
             }); break;
         }
@@ -209,11 +253,21 @@ var generateMenuClass = function(menuList, menuDocuments, groupControl, callback
     callback();
 };
 
-
+var getProductDetail = function(db, kioskFriendly, productFriendly, callback){ db.collection('cs_product').findOne({product_kiosk:kioskFriendly, product_friendly:productFriendly}, {}, function(err, document) { assert.equal(null, err); callback(document); }); };
 var getSlideViaKiosk = function(db, kioskFriendly, callback){ db.collection('cs_slide').findOne({slide_kiosk:kioskFriendly}, {fields:{_id:0}}, function(err, document) { assert.equal(null, err); callback(document); }); };
 var getKioskInformation = function(db, kioskFriendly, callback){ db.collection('cs_kiosk').findOne({kiosk_friendly:kioskFriendly}, {fields:{_id:0}}, function(err, document) { assert.equal(null, err); callback(document); }); };
 var getProductList = function(db, kioskFriendly, callback){ 
     var cursor = db.collection('cs_product').find( {product_kiosk:kioskFriendly}, {} );
+    var documents = new Array();
+    cursor.each(function(err, document) { assert.equal(err, null); if (document !== null){ documents.push(document); } else { callback(documents); } }); 
+};
+var getProductRelated = function(db, kioskFriendly, productFriendly, callback){ 
+    var cursor = db.collection('cs_product').find( {product_kiosk:kioskFriendly}, {} ).sort({_id:1}).limit(4);
+    var documents = new Array();
+    cursor.each(function(err, document) { assert.equal(err, null); if (document !== null){ documents.push(document); } else { callback(documents); } }); 
+};
+var getManufacturerList = function(db, kioskFriendly, callback){ 
+    var cursor = db.collection('cs_manufacturer').find( {manufacturer_kiosk:kioskFriendly}, {} );
     var documents = new Array();
     cursor.each(function(err, document) { assert.equal(err, null); if (document !== null){ documents.push(document); } else { callback(documents); } }); 
 };

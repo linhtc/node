@@ -10,11 +10,16 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
     $scope.setCurrentUser = function (user){ $scope.currentUser = user; };
     
     $scope.currentIndex = 1;
+    $scope.kioskFriendly = '';
     $scope.bannerImages = [{ src: '/frontend/templates/assets/images/slide-1.jpg' }, 
-        { src: 'frontend/templates/assets/images/slide-2.jpg'}, 
-        { src: 'frontend/templates/assets/images/slide-3.jpg'}
+        { src: '/frontend/templates/assets/images/slide-2.jpg'}, 
+        { src: '/frontend/templates/assets/images/slide-3.jpg'}
     ];
     $scope.quickViewVisable = false;
+    $scope.tabShow = {description:1, reviews:0, video:0};
+    $scope.tabShowProductSlide = {};
+    var kioskFriendly = $routeParams.kiosk;
+    var productFriendly = $routeParams.product;
     var productList4 = [];
     var productList102 = [];
     var productList1041 = [];
@@ -23,7 +28,7 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
     $scope.getKioskInformation = function(){
         var commandOption = {
             'command':'get-information',
-            'kiosk_friendly':$routeParams.kiosk
+            'kiosk_friendly':kioskFriendly
         };
         $http.post('kiosk', commandOption, {responseType: "text"}).then(function(response){
             if(response.data === null){ console.log('null'); return false; }
@@ -34,6 +39,8 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             $scope.bannerImages = kioskSlide;
             $scope.currentIndex = 0;
             
+            $scope.kioskFriendly = responseData.kiosk_friendly;
+            $rootScope.kioskFriendly = kioskFriendly;
             var kioskLogo = responseData.kiosk_logo;
             $rootScope.kioskLogo = kioskLogo; // /frontend/templates/images/logo.png
             var kioskName = responseData.kiosk_name;
@@ -55,12 +62,12 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
     $scope.getProductList = function(){
         var commandOption = {
             'command':'get-list',
-            'kiosk_friendly':$routeParams.kiosk
+            'kiosk_friendly':kioskFriendly
         };
         $http.post('product', commandOption, {responseType: "text"}).then(function(response){
             if(response.data === null){ console.log('null'); return false; }
             var responseData = response.data;
-            console.log(responseData);
+            //console.log(responseData);
             $scope.productList = responseData;
             for(var i=0; i<responseData.length; i++){
                 if(i < 4){
@@ -79,13 +86,76 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             $scope.productList1042 = productList1042;
         });
     };
+    $scope.getProductDetail = function(){
+        var commandOption = {
+            command:'get-detail',
+            kiosk_friendly:kioskFriendly,
+            product_friendly:productFriendly
+        };
+        $http.post('product', commandOption, {responseType: "text"}).then(function(response){
+            if(response.data === null){ console.log('null'); return false; }
+            var responseData = response.data;
+            //console.log(responseData);
+            $scope.productDetail = responseData;
+            $rootScope.page.setTitle(responseData.product_name);
+            $scope.productCategoryDetail = responseData.product_category;
+            var tabShowProductSlide = {};
+            var productSlide = responseData.product_slide;
+            for(var itemSlide in productSlide){
+                itemSlide = parseInt(itemSlide);
+                var itemSlideValue = itemSlide === 0 ? 1 : 0;
+                tabShowProductSlide[itemSlide] = itemSlideValue;
+            }
+            $scope.tabShowProductSlide = tabShowProductSlide;
+        });
+    };
+    $scope.getProductRelated = function(){
+        var commandOption = {
+            command:'get-related',
+            kiosk_friendly:kioskFriendly,
+            product_friendly:productFriendly
+        };
+        $http.post('product', commandOption, {responseType: "text"}).then(function(response){
+            if(response.data === null){ console.log('null'); return false; }
+            var responseData = response.data;
+            //console.log(responseData);
+            $scope.productListRelated = responseData;
+        });
+    };
     $scope.quickView = function(product){
         console.log(product);
+    };
+    $scope.tabShowSubmit = function(index){
+        var tabShow = $scope.tabShow;
+        for(var key in tabShow){
+            if(tabShow.hasOwnProperty(key)){
+                if(key === index){
+                    tabShow[key] = 1;
+                } else{
+                    tabShow[key] = 0;
+                }
+            }
+        }
+        $scope.tabShow = tabShow;
+    };
+    $scope.tabShowProductSlideSubmit = function(index){
+        var tabShowProductSlide = $scope.tabShowProductSlide;
+        for(var key in tabShowProductSlide){
+            if(tabShowProductSlide.hasOwnProperty(key)){
+                key = parseInt(key);
+                if(key === index){
+                    tabShowProductSlide[key] = 1;
+                } else{
+                    tabShowProductSlide[key] = 0;
+                }
+            }
+        }
+        $scope.tabShowProductSlide = tabShowProductSlide;
     };
     $scope.getBannerSlide = function(){
         var commandOption = {
             'command':'get-slide',
-            'kiosk_friendly':$routeParams.kiosk
+            'kiosk_friendly':kioskFriendly
         };
         $http.post('slide', commandOption, {responseType: "text"}).then(function(response){
             if(response.data === null){ console.log('null'); return false; }
@@ -98,18 +168,26 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             }
         });
     };
-    
-    $scope.login = function (credentials) {
-        AuthService.login(credentials).then(function (user) {
-            //console.log(user);
-            $rootScope.$broadcast(AUTH_EVENTS.loginSuccess);
-            $scope.setCurrentUser(user);
-        }, function () {
-            $rootScope.$broadcast(AUTH_EVENTS.loginFailed);
+    $scope.getKioskManufacturer = function(){
+        var commandOption = {
+            command:'get-list',
+            kiosk_friendly:kioskFriendly
+        };
+        $http.post('manufacturer', commandOption, {responseType: "text"}).then(function(response){
+            if(response.data === null){ console.log('null'); return false; }
+            var responseData = response.data;
+            //console.log(responseData);
+            $rootScope.page.setKioskManufacturer(responseData);
         });
     };
     
-    //$scope.login();
     $scope.getKioskInformation();
-    $scope.getProductList();
+    $scope.getKioskManufacturer();
+    if(productFriendly !== undefined){
+        $scope.getProductDetail();
+        $scope.getProductRelated();
+    } else{
+        $scope.getProductList();
+    }
+    
 });

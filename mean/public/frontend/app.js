@@ -14,7 +14,7 @@ frontendApplication.config(function($routeProvider, $locationProvider, USER_ROLE
     $routeProvider
     // route for the home page
     .when('/', {
-        templateUrl : 'frontend/templates/pages/home/home.html',
+        templateUrl : '/frontend/templates/pages/home/home.html',
         controller  : 'homeController',
         title : mainTitle,
         data: {
@@ -22,17 +22,20 @@ frontendApplication.config(function($routeProvider, $locationProvider, USER_ROLE
         }
     })
     .when('/:kiosk', {
-        templateUrl : 'frontend/templates/pages/kiosk/kiosk.html',
+        templateUrl : '/frontend/templates/pages/kiosk/kiosk.html',
         controller  : 'kioskController',
         title : mainTitle,
         data: {
-            authorizedRoles: [USER_ROLES.admin]
+            authorizedRoles: [USER_ROLES.all]
         }
     })
-    .when('/:kiosk/:action', {
-        templateUrl : 'frontend/templates/pages/about.html',
-        controller  : 'aboutController',
-        title : mainTitle
+    .when('/:kiosk/san-pham/:product', {
+        templateUrl : '/frontend/templates/pages/product/product.detail.html',
+        controller  : 'kioskController',
+        title : mainTitle,
+        data: {
+            authorizedRoles: [USER_ROLES.all]
+        }
     })
     .otherwise({
         redirectTo: '/'
@@ -112,6 +115,9 @@ frontendApplication.run(function($rootScope, AUTH_EVENTS, AuthService){
         },
         setKioskEmail: function(kioskEmail){
             this.kioskEmail = kioskEmail;
+        },
+        setKioskManufacturer: function(kioskManufacturer){
+            this.kioskManufacturer = kioskManufacturer;
         }
     };
 
