@@ -1,0 +1,338 @@
+<!-- home.html -->
+    
+    <!-- ==========================
+    	JUMBOTRON - START 
+    =========================== -->
+    <banner-slide></banner-slide>
+    <!-- ==========================
+    	JUMBOTRON - END 
+    =========================== -->
+    
+    <!-- ==========================
+    	FEATURED PRODUCTS - START 
+    =========================== -->
+    <section class="content featured-products">
+        <div class="container">
+            <h2></h2>
+        </div>
+    </section>
+    <!-- ==========================
+    	FEATURED PRODUCTS - END 
+    =========================== -->
+    
+    <!-- ==========================
+    	GRID PRODUCTS - START 
+    =========================== -->
+    <section class="content grid-products border-top">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-6 col-sm-3" ng-repeat="product in productList4">
+                    <article class="product-item">
+                        <img src="{{product.product_image}}" class="img-responsive" alt="">
+                        <h3><a href="single-product.html">{{product.product_name}}</a></h3>
+                        <div class="product-rating">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                        </div>
+                        <span class="price">
+                            <del><span class="amount">{{product.product_price | number:0}} Đ</span></del>
+                            <ins><span class="amount">{{product.product_saleoff | number:0}} Đ</span></ins>
+                        </span>
+                    </article>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-6 col-sm-3" ng-repeat="product in productList102">
+                    <article class="product-item">
+                        <img src="{{product.product_image}}" class="img-responsive" alt="">
+                        <h3><a href="single-product.html">{{product.product_name}}</a></h3>
+                        <div class="product-rating">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                        </div>
+                        <span class="price">
+                            <del><span class="amount">{{product.product_price | number:0}} Đ</span></del>
+                            <ins><span class="amount">{{product.product_saleoff | number:0}} Đ</span></ins>
+                        </span>
+                    </article>
+                </div>
+                <div class="col-xs-12 col-sm-3">
+                    <ul class="list-unstyled small-product">
+                        <!-- PRODUCT - START -->
+                        <li class="clearfix" ng-repeat="product in productList1041">
+                        	<a href="single-product.html">
+                            	<img src="{{product.product_image}}" class="img-responsive" alt="">
+                            	<h3>{{product.product_name}}</h3>
+                            </a>
+                            <div class="product-rating">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <span class="price">
+                                <del><span class="amount">{{product.product_price | number:0}} Đ</span></del>
+                            	<ins><span class="amount">{{product.product_saleoff | number:0}} Đ</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                    </ul>
+                    
+                </div>
+                <div class="col-xs-12 col-sm-3">
+                    <ul class="list-unstyled small-product">
+                        <!-- PRODUCT - START -->
+                        <li class="clearfix" ng-repeat="product in productList1042">
+                        	<a href="single-product.html">
+                            	<img src="{{product.product_image}}" class="img-responsive" alt="">
+                            	<h3>{{product.product_name}}</h3>
+                            </a>
+                            <div class="product-rating">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <span class="price">
+                                <del><span class="amount">{{product.product_price | number:0}} Đ</span></del>
+                            	<ins><span class="amount">{{product.product_saleoff | number:0}} Đ</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                    </ul>
+                    
+                </div>
+             </div>     	
+        </div>
+    </section>
+    <!-- ==========================
+    	GRID PRODUCTS - END 
+    =========================== -->
+    
+    <!-- ==========================
+    	SMALL PRODUCTS - START 
+    =========================== -->
+    <section class="content small-products">
+        <div class="container">
+        	<div class="row">
+            	
+                <!-- COLUMN - START -->
+                <div class="col-sm-4">
+                    <h2>Đang giảm giá</h2>
+                    <ul class="list-unstyled small-product">
+                    	
+               			<!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-1.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <span class="price">
+                                <del><span class="amount">$36.00</span></del>
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                        <!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-2.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <span class="price">
+                                <del><span class="amount">$36.00</span></del>
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                        <!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-3.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <span class="price">
+                                <del><span class="amount">$36.00</span></del>
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                    </ul>
+                </div>
+                <!-- COLUMN - END -->
+                
+                <!-- COLUMN - START -->
+                <div class="col-sm-4">
+                    <h2>Sản phẩm bán chạy</h2>
+                    <ul class="list-unstyled small-product">
+                    	
+               			<!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-1.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <span class="price">
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                        <!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-2.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <span class="price">
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                        <!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-3.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <span class="price">
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                    </ul>
+                </div>
+                <!-- COLUMN - END -->
+                
+                <!-- COLUMN - START -->
+                <div class="col-sm-4">
+                    <h2>Đánh giá sản phẩm</h2>
+                    <ul class="list-unstyled small-product">
+                    	
+               			<!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-1.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <div class="product-rating">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <span class="price">
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                        <!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-2.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <div class="product-rating">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <span class="price">
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                        <!-- PRODUCT - START -->
+                        <li class="clearfix">
+                        	<a href="single-product.html">
+                            	<img src="/frontend/templates/assets/images/products/product-3.jpg" class="img-responsive" alt="">
+                            	<h3>Sunny Tank Selected Femme</h3>
+                            </a>
+                            <div class="product-rating">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <span class="price">
+                                <ins><span class="amount">$30.00</span></ins>
+                            </span>
+                        </li>
+                        <!-- PRODUCT - END -->
+                        
+                    </ul>
+                </div>
+                <!-- COLUMN - END -->
+                
+            </div>
+        </div>
+    </section>
+     <!-- ==========================
+    	SMALL PRODUCTS - END 
+    =========================== -->
+     
+    <!-- ==========================
+    	SERVICES - START 
+    =========================== -->
+    <section class="content services services-3x">
+        <div class="container">
+        	<div class="row row-no-padding">
+            
+            	<!-- SERVICE - START -->
+                <div class="col-xs-12 col-sm-4">
+                    <div class="service">
+                        <i class="fa fa-star"></i>
+                        <h3>GIAO HÀNG TẬN NƠI MIỄN PHÍ</h3>
+                        <p>Đảm bảo quý khách có thể nhận hàng sau 24h trong bán kính 30km và hoàn toàn miễn phí...</p>
+                    </div>
+                </div>
+                <!-- SERVICE - END -->
+                
+                <!-- SERVICE - START -->
+                <div class="col-xs-6 col-sm-4">
+                    <div class="service">
+                        <i class="fa fa-heart"></i>
+                        <h3>SỰ CHĂM SÓC TỐT NHẤT</h3>
+                        <p>Đảm bảo quý khách có thể đổi trả hàng trong thời hạn một tuần và hoàn toàn miễn phí...</p>
+                    </div>
+                </div>
+                <!-- SERVICE - END -->
+                
+                <!-- SERVICE - START -->
+                <div class="col-xs-6 col-sm-4">
+                    <div class="service">
+                        <i class="fa fa-user"></i>
+                        <h3>ĐĂNG KÝ GIAN HÀNG!</h3>
+                        <p>Bạn đã sẵn sàng bán những món hàng đầu tiên chưa? Hãy cùng tham gia với chúng tôi <a href="#">tại đây</a>...</p>
+                    </div>
+                </div>
+                <!-- SERVICE - END -->
+                
+            </div>
+            
+        </div>
+    </section>
+    <!-- ==========================
+    	SERVICES - END 
+    =========================== -->
+    
+    

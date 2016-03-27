@@ -3,7 +3,6 @@
 frontendApplication.directive("bannerSlide", function($timeout) {
     return {
         link: function(scope, element, attrs){
-            //scope.currentIndex = 0; // Initially the index is at the first image
             scope.next = function() { scope.currentIndex < scope.bannerImages.length - 1 ? scope.currentIndex++ : scope.currentIndex = 0; };
             scope.prev = function() { scope.currentIndex > 0 ? scope.currentIndex-- : scope.currentIndex = scope.bannerImages.length - 1; };
             scope.$watch('currentIndex', function() {
@@ -17,6 +16,6 @@ frontendApplication.directive("bannerSlide", function($timeout) {
             scope.prevnext = function(index) { scope.currentIndex = index -1; scope.next(); $timeout.cancel(timer); sliderFunc(); };
             sliderFunc();
         },
-        templateUrl: 'frontend/templates/pages/slide.html'
+        templateUrl: 'frontend/templates/pages/slide/slide.html'
     };
 });

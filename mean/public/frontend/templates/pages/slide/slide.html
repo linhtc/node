@@ -1,0 +1,17 @@
+<section class="content jumbotron">
+    <div id="homepage-1-carousel" class="nav-inside owl-animation">
+        <div class="item" ng-repeat="image in bannerImages" id="{{image.id}}" style="background-image: url({{image.src}});" ng-show="image.visible">
+            <div class="slide-mask"></div>
+            <div class="slide-body">
+                <div class="container">
+                    <h1 class="border animation top-to-bottom">The <b>easiest</b> way to shop</h1>
+                    <ul class="list-unstyled">
+                        <li class="animation left-to-right delay-1"><i class="fa fa-check"></i> An Established Product</li>
+                        <li class="animation left-to-right delay-2"><i class="fa fa-check"></i> True Premium Quality</li>
+                        <li class="animation left-to-right delay-3"><i class="fa fa-check"></i> Dedicated Support</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -5,13 +5,10 @@ frontendApplication.controller('homeController', function($scope, $routeParams, 
     // create a message to display in our view
     $scope.message = $routeParams.kiosk;
     $scope.currentIndex = 1;
-    $scope.bannerImages = [{
-        src: '/frontend/templates/images/slider/slider0.jpg',
-        title: 'Pic 1'
-    },{
-        src: '/frontend/templates/images/slider/slider0.jpg',
-        title: 'Pic 1'
-    }];
+    $scope.bannerImages = [{ src: '/frontend/templates/assets/images/slide-1.jpg' }, 
+        { src: 'frontend/templates/assets/images/slide-2.jpg'}, 
+        { src: 'frontend/templates/assets/images/slide-3.jpg'}
+    ];
     $scope.getBannerSlide = function(){
         var commandOption = {
             'command':'get-slide',
@@ -22,7 +19,7 @@ frontendApplication.controller('homeController', function($scope, $routeParams, 
             if(typeof response.data === 'undefined'){ return false; }
             if(typeof response.data.slide_list === 'object'){ 
                 if(response.data.slide_list !== 'null'){
-                    $scope.bannerImages = response.data.slide_list;
+                    //$scope.bannerImages = response.data.slide_list;
                     $scope.currentIndex = 0;
                 }
             }

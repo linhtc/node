@@ -9,8 +9,8 @@ var basePath = '/var/www/html/node/mean/';
 http.createServer(function (request, response){
     var filePath = request.url;
     console.log('Request starting: '+filePath);
-    if (filePath === '/'){ filePath = '/frontend.html'; }
-    if(filePath.indexOf('admin') >= 0){ filePath = '/backend.html'; }
+    if (filePath === '/'){ filePath = '/frontend/main.html'; }
+    if(filePath.indexOf('admin') >= 0){ filePath = '/backend/main.html'; }
     filePath = basePath+'public'+filePath;
     var extention = path.extname(filePath);
     var contentType = 'text/html';
@@ -167,8 +167,19 @@ function processServices(request, response){
                     } default:{ response.writeHead(200); response.end(JSON.stringify({message:'error'})); }
                 }
             }); break;
-        } default:{
-            fs.readFile(basePath+'public'+'/frontend.html', function(error, content){
+        }
+        case '/login':{
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            var requestDataTmp = "";
+            request.on('data', function (chunk){ requestDataTmp += chunk; });
+            request.on('end', function () {
+                console.log(requestDataTmp);
+                var user = {id:123456789, _id:"56ab29d610a75531168eee91", user_role:"admin"};
+                response.end(JSON.stringify(user));
+            }); break;
+        }
+        default:{
+            fs.readFile(basePath+'public'+'/frontend/main.html', function(error, content){
                 if(error){
                     response.writeHead(500);
                     response.end();
