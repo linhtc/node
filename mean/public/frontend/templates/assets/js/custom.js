@@ -12,7 +12,7 @@ $(window).scroll(function(){
 	
 	/*------------------------------
 		FIXED NAVBAR
-	------------------------------*/	
+	------------------------------*/
 	if($(window).width() > 767) {
 		if($(window).scrollTop() > 165) {
 			$('header.navbar-default').addClass('navbar-small');

@@ -18,7 +18,7 @@ backendApplication.controller('historyController', function($scope, $http, ngDia
     
     $scope.clickToOpen = function (naCookie, cnaCookie) {
         $scope.cookieList = [{name:'NA12', list:naCookie}, {name:'C.NA12', list:cnaCookie}];
-        ngDialog.open({
+        ngDialog.open({ 
             template: 'backend/templates/pages/history/detail.html',
             className: 'ngdialog-theme-plain custom-width',
             scope: $scope

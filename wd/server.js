@@ -4,8 +4,8 @@ var path = require('path');
 var url  = require('url');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
-var basePath = '/var/www/html/node/wd/';
-//var basePath = '/home/gdsuser/wd-rma/';
+//var basePath = '/var/www/html/node/wd/';
+var basePath = '/home/gdsuser/wd-rma/';
 
 http.createServer(function (request, response){
     var filePath = request.url;
@@ -121,5 +121,7 @@ var generateMenuClass = function(menuList, menuDocuments, groupControl, callback
     console.log(menuDocuments);
     callback();
 };
+
+
 var getSlideViaKiosk = function(db, kioskFriendly, callback){ db.collection('cs_slide').findOne({slide_kiosk:kioskFriendly}, {fields:{_id:0}}, function(err, document) { assert.equal(null, err); callback(document); }); };
 

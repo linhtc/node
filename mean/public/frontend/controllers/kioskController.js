@@ -1,23 +1,22 @@
 /* global frontendApplication */
 
 // create the controller and inject Angular's $scope
-frontendApplication.controller('kioskController', function($rootScope, $scope, $routeParams, $http, AUTH_EVENTS, USER_ROLES, AuthService) {
+frontendApplication.controller('kioskController', function($rootScope, $scope, $routeParams, $location, $http, AUTH_EVENTS, USER_ROLES, AuthService, ngDialog) {
     // authentication
     $scope.currentUser = 'null';
     $scope.userRoles = USER_ROLES;
     $scope.isAuthorized = AuthService.isAuthorized;
-    
     $scope.setCurrentUser = function (user){ $scope.currentUser = user; };
     
+    var pathUrl = $location.$$path;
     $scope.currentIndex = 1;
     $scope.kioskFriendly = '';
-    $scope.bannerImages = [{ src: '/frontend/templates/assets/images/slide-1.jpg' }, 
-        { src: '/frontend/templates/assets/images/slide-2.jpg'}, 
-        { src: '/frontend/templates/assets/images/slide-3.jpg'}
-    ];
+    $scope.bannerImages = [{ src: '/frontend/templates/assets/images/slide-1.jpg' }, { src: '/frontend/templates/assets/images/slide-2.jpg'}, { src: '/frontend/templates/assets/images/slide-3.jpg'} ];
     $scope.quickViewVisable = false;
     $scope.tabShow = {description:1, reviews:0, video:0};
     $scope.tabShowProductSlide = {};
+    $scope.tabShowQuickViewSlide = {};
+    $scope.quantityType = {'quickview':1, 'detail':1};
     var kioskFriendly = $routeParams.kiosk;
     var productFriendly = $routeParams.product;
     var productList4 = [];
@@ -25,6 +24,25 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
     var productList1041 = [];
     var productList1042 = [];
     $scope.quickViewProduct = {};
+    $rootScope.shoppingCart = {
+        kioskFriendly:{
+            'giay-the-thao-a1':{
+                name:'Giày thể thao A1',
+                friendly:'giay-the-thao-a1',
+                src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham1.jpg',
+                quantity:3,
+                price:3,
+                attributes:'Xanh, M'
+            }, 'giay-the-thao-a2':{
+                name:'Giày thể thao A2', 
+                friendly:'giay-the-thao-a2',
+                src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham2.jpg',
+                quantity:1,
+                price:12,
+                attributes:'Đỏ, XL'
+            }
+        }
+    };
     $scope.getKioskInformation = function(){
         var commandOption = {
             'command':'get-information',
@@ -51,8 +69,11 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             $rootScope.kioskPhone = kioskPhone;
             var kioskEmail = '<i class="fa fa-envelope"></i> '+responseData.kiosk_email;
             $rootScope.kioskEmail = kioskEmail;
-            
-            $rootScope.page.setTitle(kioskName);
+            if(pathUrl.indexOf('gio-hang') >= 0){
+                $rootScope.page.setTitle('Giỏ hàng');
+            } else{
+                $rootScope.page.setTitle(kioskName);
+            }
             $rootScope.page.setKioskName(kioskName);
             $rootScope.page.setKioskSlogan(kioskSlogan);
             $rootScope.page.setKioskPhone(kioskPhone);
@@ -152,6 +173,20 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
         }
         $scope.tabShowProductSlide = tabShowProductSlide;
     };
+    $scope.tabShowQuickViewSlideSubmit = function(index){
+        var tabShowQuickViewSlide = $scope.tabShowQuickViewSlide;
+        for(var key in tabShowQuickViewSlide){
+            if(tabShowQuickViewSlide.hasOwnProperty(key)){
+                key = parseInt(key);
+                if(key === index){
+                    tabShowQuickViewSlide[key] = 1;
+                } else{
+                    tabShowQuickViewSlide[key] = 0;
+                }
+            }
+        }
+        $scope.tabShowQuickViewSlide = tabShowQuickViewSlide;
+    };
     $scope.getBannerSlide = function(){
         var commandOption = {
             'command':'get-slide',
@@ -180,14 +215,56 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             $rootScope.page.setKioskManufacturer(responseData);
         });
     };
+    $scope.changeQuantity = function(quantityType, expression){
+        var quantity = $scope.quantityType[quantityType];
+        if(expression === 'plus'){
+            if(quantity < 10){ quantity++; }
+        } else if(expression === 'minus'){
+            if(quantity > 1){ quantity--; }
+        } else if(quantity > 10){
+            quantity = 10;
+        } else if(quantity < 1){
+            quantity = 1;
+        }
+        $scope.quantityType[quantityType] = quantity;
+    };
+    $scope.openQuickView = function (quickViewDetail) {
+        var tabShowQuickViewSlide = {};
+        var productSlide = quickViewDetail.product_slide;
+        for(var itemSlide in productSlide){
+            itemSlide = parseInt(itemSlide);
+            var itemSlideValue = itemSlide === 0 ? 1 : 0;
+            tabShowQuickViewSlide[itemSlide] = itemSlideValue;
+        }
+        $scope.tabShowQuickViewSlide = tabShowQuickViewSlide;
+        $scope.quickViewDetail = quickViewDetail;
+        ngDialog.open({
+            template: '/frontend/templates/pages/product/product.quickview.html',
+            className: 'custom-width',
+            scope: $scope
+        });
+    };
+    $scope.openComment = function (productComment) {
+        $scope.popupReview = 1;
+        $scope.productComment = productComment;
+        ngDialog.open({
+            template: '/frontend/templates/pages/product/product.comment.html',
+            className: 'custom-width',
+            scope: $scope
+        });
+    };
+    $scope.closeQuickView = function(){
+        ngDialog.closeAll();
+    };
     
     $scope.getKioskInformation();
     $scope.getKioskManufacturer();
     if(productFriendly !== undefined){
         $scope.getProductDetail();
         $scope.getProductRelated();
-    } else{
+    } else if(pathUrl.indexOf('gio-hang') < 0){
         $scope.getProductList();
+    } else{
+        
     }
-    
 });

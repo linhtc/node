@@ -29,7 +29,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="owl-controls">
+                                <div class="    owl-controls">
                                     <div class="owl-dots" style="">
                                         <div class="owl-dot" ng-click="tabShowProductSlideSubmit($index)" ng-class="{'active':tabShowProductSlide[$index] === 1}" ng-repeat="productSrc in productDetail.product_slide track by $index"><span></span></div>
                                     </div>
@@ -67,9 +67,9 @@
                                     
                                     <div class="col-md-3 col-sm-4">
                                         <div class="product-quantity clearfix">
-                                            <a class="btn btn-default" id="qty-minus">-</a>
-                                            <input class="form-control" id="qty" value="1" type="text">
-                                            <a class="btn btn-default" id="qty-plus">+</a>
+                                            <a class="btn btn-default" id="qty-minus" ng-click="changeQuantity('detail', 'minus')">-</a>
+                                            <input ng-change="changeQuantity('detail', quantity)" class="form-control" id="qty" value="1" ng-model="quantityType.detail" type="text">
+                                            <a class="btn btn-default" id="qty-plus" ng-click="changeQuantity('detail', 'plus')">+</a>
                                         </div>
                                     </div>
                                     
@@ -133,7 +133,7 @@
                             <!-- REVIEW - END -->
                         </div>
                         
-                        <a class="btn btn-primary btn-lg" data-toggle="modal" data-target="#add-review">Tham gia bình luận</a>
+                        <a ng-click="openComment(productDetail)" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#add-review">Tham gia bình luận</a>
 
                     </div>
                     <div role="tabpanel" class="tab-pane active" id="video" ng-show="tabShow['video']">
@@ -158,7 +158,7 @@
                                         <a href="{{kioskFriendly+'/san-pham/'+product.product_friendly}}" class="product-permalink"></a>
                                         <img src="{{product.product_image}}" class="img-responsive" alt="">
                                         <div class="product-quickview">
-                                            <a class="btn btn-quickview" data-toggle="modal" data-target="#product-quickview">Quick View</a>
+                                            <a ng-click="openQuickView(product)" class="btn btn-quickview" data-toggle="modal" data-target="#product-quickview">Xem nhanh</a>
                                         </div>
                                     </div>
                                 </div>
@@ -171,9 +171,9 @@
                                         </span>
                                         <p>{{product.product_short_description}}</p>
                                         <div class="buttons buttons-simple">
-                                            <a href=""><i class="fa fa-exchange"></i></a>
-                                            <a href=""><i class="fa fa-shopping-cart"></i></a>
-                                            <a href=""><i class="fa fa-heart"></i></a>
+                                            <a href="" title="So sánh"><i class="fa fa-exchange"></i></a>
+                                            <a href="" title="Cho vào giỏ"><i class="fa fa-shopping-cart"></i></a>
+                                            <a href="" title="Tôi yêu nó"><i class="fa fa-heart"></i></a>
                                         </div>
                                     </div>
                                 </div>

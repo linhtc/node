@@ -1,5 +1,5 @@
 // create the module and name it scotchApp
-var frontendApplication = angular.module('frontendApplication', ['ngRoute', 'ngAnimate']);
+var frontendApplication = angular.module('frontendApplication', ['ngRoute', 'ngAnimate', 'ngDialog']);
 
 // trust html binding
 frontendApplication.filter('trusted_html', ['$sce', function($sce){
@@ -23,6 +23,14 @@ frontendApplication.config(function($routeProvider, $locationProvider, USER_ROLE
     })
     .when('/:kiosk', {
         templateUrl : '/frontend/templates/pages/kiosk/kiosk.html',
+        controller  : 'kioskController',
+        title : mainTitle,
+        data: {
+            authorizedRoles: [USER_ROLES.all]
+        }
+    })
+    .when('/:kiosk/gio-hang', {
+        templateUrl : '/frontend/templates/pages/product/product.cart.html',
         controller  : 'kioskController',
         title : mainTitle,
         data: {

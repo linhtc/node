@@ -1,0 +1,30 @@
+<div style="display: block;" class="modal fade modal-add-review in" id="add-review" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                    <div class="modal-header">
+                    <button ng-click="closeQuickView()" type="button" class="close" data-dismiss="modal" aria-label="Close"><i class="fa fa-times"></i></button>
+                <h4 class="modal-title">Bình luận sản phẩm {{productComment.product_name}}</h4>
+                    </div>
+            <div class="modal-body">
+                <form class="comment-form">
+                    <p class="comment-notes"><span id="email-notes">Địa chỉ mail của tôi sẽ được ẩn đi.</span> Các trường có dấu<span class="required">*</span> là bắt buộc</p>
+                    <div class="row">
+                        <div class="form-group comment-form-author col-sm-6">
+                            <label for="author">Tên<span class="required">*</span></label> 
+                            <input class="form-control" id="author" name="author" required="" value="" placeholder="Tên của tôi" type="text">
+                        </div>
+                        <div class="form-group comment-form-email col-sm-6">
+                            <label for="email">Email<span class="required">*</span></label> 
+                            <input class="form-control" id="email" name="email" required="" value="" placeholder="Email của tôi" type="email">
+                        </div>
+                    </div>
+                    <div class="form-group comment-form-comment">
+                        <label for="comment">Nội dung<span class="required">*</span></label>
+                        <textarea class="form-control" id="comment" name="comment" required="" placeholder="Cảm nhận của tôi về sản phẩm {{productComment.product_name}}"></textarea>
+                    </div>						
+                    <button class="btn btn-primary" type="submit"><i class="fa fa-check"></i>Bình luận</button>
+                </form>
+            </div>
+            </div>
+    </div>
+</div>
