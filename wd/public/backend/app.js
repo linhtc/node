@@ -17,7 +17,7 @@ backendApplication.config(function($routeProvider, $locationProvider){
     })
     .when('/history', {
         title: 'History',
-        templateUrl : 'backend/templates/pages/history/history.html',
+        templateUrl : 'backend/templates/pages/history/test.html',
         controller  : 'historyController'
     });
     

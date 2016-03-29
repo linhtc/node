@@ -1,7 +1,7 @@
 /* global backendApplication */
 
 // create the controller and inject Angular's $scope
-backendApplication.controller('historyController', function($scope, $http, ngDialog) {
+backendApplication.controller('historyController', function($rootScope, $scope, $http, ngDialog) {
     // create a message to display in our view
     $scope.cookieList = [];
     $scope.totalRecords = 0;
@@ -24,4 +24,40 @@ backendApplication.controller('historyController', function($scope, $http, ngDia
             scope: $scope
         });
     };
+    
+    $rootScope.pool = {
+        pool1:[{
+            name:'A1',
+            quantity:3,
+            price:3
+        },{
+            name:'A2',
+            quantity:5,
+            price:10
+        },{
+            name:'A3',
+            quantity:8,
+            price:12
+        }
+    ]};
+    
+    $scope.grandTotal = function(){
+        var pool1 = $rootScope.pool['pool1'];
+        return pool1.reduce(function(previousValue, currentValue, currentIndex, array) {
+            var totalPrevious = 0;
+            if(typeof previousValue === 'object'){
+                totalPrevious = previousValue.quantity * previousValue.price;
+            } else{
+                totalPrevious = previousValue;
+            }
+            if(typeof currentValue === 'object'){
+                totalPrevious += currentValue.quantity * currentValue.price;
+            }
+            return totalPrevious;
+        });
+    };
+    $scope.applyFunc = function(){
+        console.log($rootScope.pool);
+    };
+    
 });

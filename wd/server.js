@@ -4,8 +4,8 @@ var path = require('path');
 var url  = require('url');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
-//var basePath = '/var/www/html/node/wd/';
-var basePath = '/home/gdsuser/wd-rma/';
+var basePath = '/var/www/html/node/wd/';
+//var basePath = '/home/gdsuser/wd-rma/';
 
 http.createServer(function (request, response){
     var filePath = request.url;

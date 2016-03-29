@@ -227,44 +227,14 @@
                       	<ul class="dropdown-menu">
                         	
                             <!-- CART ITEM - START -->
-                            <li>
+                            <li ng-repeat="product in shoppingCart[kioskFriendly]">
                             	<div class="row">
                                 	<div class="col-sm-3">
-                                    	<img src="/frontend/templates/assets/images/products/product-1.jpg" class="img-responsive" alt="">
+                                    	<img src="{{product.src}}" class="img-responsive" alt="">
                                     </div>
                                     <div class="col-sm-9">
-                                    	<h4><a href="single-product.html">Fusce Aliquam</a></h4>
-                                        <p>1x - $20.00</p>
-                                    	<a href="#" class="remove"><i class="fa fa-times-circle"></i></a>
-                                    </div>
-                                </div>
-                            </li>
-                            <!-- CART ITEM - END -->
-                            
-                            <!-- CART ITEM - START -->
-                            <li>
-                            	<div class="row">
-                                	<div class="col-sm-3">
-                                    	<img src="/frontend/templates/assets/images/products/product-2.jpg" class="img-responsive" alt="">
-                                    </div>
-                                    <div class="col-sm-9">
-                                    	<h4><a href="single-product.html">Fusce Aliquam</a></h4>
-                                        <p>1x - $20.00</p>
-                                    	<a href="#" class="remove"><i class="fa fa-times-circle"></i></a>
-                                    </div>
-                                </div>
-                            </li>
-                            <!-- CART ITEM - END -->
-                            
-                            <!-- CART ITEM - START -->
-                            <li>
-                            	<div class="row">
-                                	<div class="col-sm-3">
-                                    	<img src="/frontend/templates/assets/images/products/product-3.jpg" class="img-responsive" alt="">
-                                    </div>
-                                    <div class="col-sm-9">
-                                    	<h4><a href="single-product.html">Fusce Aliquam</a></h4>
-                                        <p>1x - $20.00</p>
+                                    	<h4><a href="{{kioskFriendly+'/san-pham/'+product.friendly}}">{{product.name}}</a></h4>
+                                        <p>{{product.quantity}}x - {{product.price}}</p>
                                     	<a href="#" class="remove"><i class="fa fa-times-circle"></i></a>
                                     </div>
                                 </div>
@@ -275,10 +245,10 @@
                             <li>
                             	<div class="row">
                                 	<div class="col-sm-6">
-                                    	<a href="cart.html" class="btn btn-primary btn-block">View Cart</a>
+                                    	<a href="{{kioskFriendly}}/gio-hang" class="btn btn-primary btn-block">Xem giỏ</a>
                                     </div>
                                     <div class="col-sm-6">
-                                    	<a href="checkout.html" class="btn btn-primary btn-block">Checkout</a>
+                                    	<a href="checkout.html" class="btn btn-primary btn-block">Thanh toán</a>
                                     </div>
                                 </div>
                             </li>
@@ -438,7 +408,9 @@
     <script src="http://code.jquery.com/jquery-latest.min.js"></script>
     <script src="http://code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
     <script src="/frontend/templates/assets/js/owl.carousel.min.js"></script>
+    <!--
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&amp;sensor=true"></script>
+    -->
     <script src="/frontend/templates/assets/js/bootstrap.min.js"></script>
     <script src="/frontend/templates/assets/js/bootstrap-hover-dropdown.min.js"></script>
     <script src="/frontend/templates/assets/js/SmoothScroll.js"></script>

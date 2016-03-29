@@ -5,12 +5,7 @@
         <group>
             <file>file:/var/www/html/node/mean/server.js</file>
             <file>file:/var/www/html/node/mean/public/frontend/app.js</file>
-            <file>file:/var/www/html/node/mean/public/frontend/controllers/kioskController.js</file>
-            <file>file:/var/www/html/node/mean/public/frontend/main.html</file>
             <file>file:/var/www/html/node/mean/public/frontend/templates/pages/product/product.cart.html</file>
-            <file>file:/var/www/html/node/mean/public/frontend/main_1.html</file>
-            <file>file:/var/www/html/node/mean/public/frontend/templates/pages/kiosk/kiosk.html</file>
-            <file>file:/var/www/html/node/mean/public/frontend/templates/pages/product/product.detail.html</file>
         </group>
     </open-files>
 </project-private>

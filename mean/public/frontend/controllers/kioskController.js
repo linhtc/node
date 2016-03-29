@@ -24,24 +24,117 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
     var productList1041 = [];
     var productList1042 = [];
     $scope.quickViewProduct = {};
-    $rootScope.shoppingCart = {
-        kioskFriendly:{
-            'giay-the-thao-a1':{
-                name:'Giày thể thao A1',
-                friendly:'giay-the-thao-a1',
-                src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham1.jpg',
-                quantity:3,
-                price:3,
-                attributes:'Xanh, M'
-            }, 'giay-the-thao-a2':{
-                name:'Giày thể thao A2', 
-                friendly:'giay-the-thao-a2',
-                src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham2.jpg',
-                quantity:1,
-                price:12,
-                attributes:'Đỏ, XL'
+    $scope.attributeCart = {};
+    var shoppingCart = {};
+    shoppingCart[kioskFriendly] = [
+        /*
+        {
+            name:'Giày thể thao A1',
+            friendly:'giay-the-thao-a1',
+            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham1.jpg',
+            quantity:3,
+            price:3,
+            attributes:'Xanh, M'
+        }, {
+            name:'Giày thể thao A2', 
+            friendly:'giay-the-thao-a2',
+            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham2.jpg',
+            quantity:1,
+            price:12,
+            attributes:'Đỏ, XL'
+        }, {
+            name:'Giày thể thao A3', 
+            friendly:'giay-the-thao-a3',
+            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham3.jpg',
+            quantity:1,
+            price:12,
+            attributes:'Đỏ, XL'
+        }, {
+            name:'Giày thể thao A4', 
+            friendly:'giay-the-thao-a4',
+            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham4.jpg',
+            quantity:1,
+            price:12,
+            attributes:'Đỏ, XL'
+        }, {
+            name:'Giày thể thao A5', 
+            friendly:'giay-the-thao-a5',
+            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham5.jpg',
+            quantity:1,
+            price:12,
+            attributes:'Đỏ, XL'
+        }
+        */
+    ];
+    //$rootScope.shoppingCart = shoppingCart;
+    var checkShoppingCart = localStorage.getItem('shoppingCart');
+    if(checkShoppingCart !== null){
+        $rootScope.shoppingCart = JSON.parse(checkShoppingCart);
+    }
+    $rootScope.shoppingDiscount = 10;
+    $scope.getTotalCart = function(){
+        if(typeof $rootScope.shoppingCart === 'undefined'){ return 0; }
+        var pool1 = $rootScope.shoppingCart[kioskFriendly];
+        var shoppingTotal = 0;
+        if(pool1.length === 1){
+            shoppingTotal = pool1[0].quantity * pool1[0].price;
+        } else if(pool1.length > 1){
+            shoppingTotal = pool1.reduce(function(previousValue, currentValue, currentIndex, array) {
+                var totalPrevious = 0;
+                if(typeof previousValue === 'object'){
+                    totalPrevious = previousValue.quantity * previousValue.price;
+                } else{
+                    totalPrevious = previousValue;
+                }
+                if(typeof currentValue === 'object'){
+                    totalPrevious += currentValue.quantity * currentValue.price;
+                }
+                return totalPrevious;
+            });
+        }
+        $scope.shoppingTotal = shoppingTotal;
+        return shoppingTotal;
+    };
+    $scope.removeShoppingCart = function(index){
+        $rootScope.shoppingCart[kioskFriendly].splice(index, 1);   
+    };
+    $scope.addShoppingCart = function(product){
+        //console.log(product);
+        //console.log($scope.quantityType.detail);
+        var quantity = $scope.quantityType.detail;
+        var attributeCartSelect = $scope.attributeCart;
+        var attCartString = '';
+        for(var attr in attributeCartSelect){
+            if(attributeCartSelect.hasOwnProperty(attr)){
+                attCartString += (attCartString === '' ? '' : ', ')+attributeCartSelect[attr];
             }
         }
+        var shoppingCartTmp = [];
+        if(typeof $rootScope.shoppingCart !== 'undefined'){ shoppingCartTmp = $rootScope.shoppingCart[kioskFriendly]; }
+        //console.log(attCartString);
+        var existedCart = false;
+        shoppingCartTmp.forEach(function(item){
+            console.log(item);
+            if(item.friendly === product.product_friendly && item.attributes === attCartString){
+                item.quantity += quantity;
+                existedCart = true;
+            }
+        });
+        if(!existedCart){
+            var cartItem = {
+                name:product.product_name, 
+                friendly:product.product_friendly,
+                src: product.product_image,
+                quantity:quantity,
+                price:product.product_price,
+                attributes:attCartString
+            };
+            shoppingCartTmp.push(cartItem);
+            shoppingCart[kioskFriendly] = shoppingCartTmp;
+            $rootScope.shoppingCart = shoppingCart;
+        }
+        console.log($rootScope.shoppingCart[kioskFriendly]);
+        localStorage.setItem('shoppingCart', JSON.stringify($rootScope.shoppingCart));
     };
     $scope.getKioskInformation = function(){
         var commandOption = {
