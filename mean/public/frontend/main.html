@@ -11,7 +11,7 @@
      <!--Angularjs -->
     <script language="javascript" src="/frontend/components/angular.min.js"></script>
     <script language="javascript" src="/frontend/components/angular-animate.min.js"></script>
-    <script language="javascript" src="/frontend/components/angular-route.js"></script>
+    <script language="javascript" src="/frontend/components/angular-route.min.js"></script>
     <script language="javascript" src="/frontend/templates/assets/js/ngDialog.js"></script>
     
     <script language="javascript" src="/frontend/app.js"></script>
@@ -234,12 +234,14 @@
                                     </div>
                                     <div class="col-sm-9">
                                     	<h4><a href="{{kioskFriendly+'/san-pham/'+product.friendly}}">{{product.name}}</a></h4>
-                                        <p>{{product.quantity}}x - {{product.price}}</p>
-                                    	<a href="#" class="remove"><i class="fa fa-times-circle"></i></a>
+                                        <p>{{product.quantity}} x {{product.price | number:0}}</p>
+                                    	<a href="#" class="remove" ng-click="removeShoppingCart(kioskFriendly, $index)"><i class="fa fa-times-circle"></i></a>
                                     </div>
                                 </div>
                             </li>
                             <!-- CART ITEM - END -->
+                            
+                            <li ng-if="shoppingCart[kioskFriendly].length < 1">Tôi chưa mua sảm phẩm nào cả</li>
                             
                             <!-- CART ITEM - START -->
                             <li>

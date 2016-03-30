@@ -37,6 +37,14 @@ frontendApplication.config(function($routeProvider, $locationProvider, USER_ROLE
             authorizedRoles: [USER_ROLES.all]
         }
     })
+    .when('/:kiosk/mua-hang', {
+        templateUrl : '/frontend/templates/pages/product/product.checkout.html',
+        controller  : 'kioskController',
+        title : mainTitle,
+        data: {
+            authorizedRoles: [USER_ROLES.all]
+        }
+    })
     .when('/:kiosk/san-pham/:product', {
         templateUrl : '/frontend/templates/pages/product/product.detail.html',
         controller  : 'kioskController',
@@ -128,6 +136,11 @@ frontendApplication.run(function($rootScope, AUTH_EVENTS, AuthService){
             this.kioskManufacturer = kioskManufacturer;
         }
     };
+    $rootScope.removeShoppingCart = function(kioskFriendly, index){
+        $rootScope.shoppingCart[kioskFriendly].splice(index, 1);   
+        localStorage.setItem('shoppingCart', JSON.stringify($rootScope.shoppingCart));
+    };
+    
 
     $rootScope.$on('$routeChangeStart', function(event, current) {
         /*

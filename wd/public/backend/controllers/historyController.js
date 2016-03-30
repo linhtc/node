@@ -38,12 +38,40 @@ backendApplication.controller('historyController', function($rootScope, $scope, 
             name:'A3',
             quantity:8,
             price:12
+        },{
+            name:'A3',
+            quantity:8,
+            price:12
+        },{
+            name:'A4',
+            quantity:8,
+            price:12
+        },{
+            name:'A5',
+            quantity:8,
+            price:12
+        },{
+            name:'A6',
+            quantity:8,
+            price:12
+        },{
+            name:'A7',
+            quantity:8,
+            price:12
+        },{
+            name:'A8',
+            quantity:8,
+            price:12
+        },{
+            name:'A9',
+            quantity:8,
+            price:12
         }
     ]};
     
     $scope.grandTotal = function(){
         var pool1 = $rootScope.pool['pool1'];
-        return pool1.reduce(function(previousValue, currentValue, currentIndex, array) {
+        var total = pool1.reduce(function(previousValue, currentValue, currentIndex, array) {
             var totalPrevious = 0;
             if(typeof previousValue === 'object'){
                 totalPrevious = previousValue.quantity * previousValue.price;
@@ -55,6 +83,10 @@ backendApplication.controller('historyController', function($rootScope, $scope, 
             }
             return totalPrevious;
         });
+        //
+        console.log('bind to localstore');
+        localStorage.setItem('localItem', JSON.stringify($rootScope.pool));
+        return total;
     };
     $scope.applyFunc = function(){
         console.log($rootScope.pool);

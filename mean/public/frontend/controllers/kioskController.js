@@ -35,42 +35,83 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             quantity:3,
             price:3,
             attributes:'Xanh, M'
-        }, {
-            name:'Giày thể thao A2', 
-            friendly:'giay-the-thao-a2',
-            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham2.jpg',
-            quantity:1,
-            price:12,
-            attributes:'Đỏ, XL'
-        }, {
-            name:'Giày thể thao A3', 
-            friendly:'giay-the-thao-a3',
-            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham3.jpg',
-            quantity:1,
-            price:12,
-            attributes:'Đỏ, XL'
-        }, {
-            name:'Giày thể thao A4', 
-            friendly:'giay-the-thao-a4',
-            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham4.jpg',
-            quantity:1,
-            price:12,
-            attributes:'Đỏ, XL'
-        }, {
-            name:'Giày thể thao A5', 
-            friendly:'giay-the-thao-a5',
-            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham5.jpg',
-            quantity:1,
-            price:12,
-            attributes:'Đỏ, XL'
         }
         */
     ];
-    //$rootScope.shoppingCart = shoppingCart;
-    var checkShoppingCart = localStorage.getItem('shoppingCart');
-    if(checkShoppingCart !== null){
-        $rootScope.shoppingCart = JSON.parse(checkShoppingCart);
+    
+    $scope.shoppingFee = 10000;
+    $scope.checkoutState = [ 'Thông tin của tôi', 'Vận chuyển', 'Thanh toán', 'Hoàn thành' ];
+    var checkoutStateIndex = localStorage.getItem('checkoutStateIndex');
+    if(checkoutStateIndex !== null){ $scope.checkoutStateIndex = parseInt(checkoutStateIndex); } else{ $scope.checkoutStateIndex = 0; }
+    $scope.nextCheckout = function(){
+        $scope.checkoutStateIndex += 1;
+        localStorage.setItem('checkoutStateIndex', $scope.checkoutStateIndex);
+        var checkoutInformation = {
+            checkoutName:$scope.checkoutName,
+            checkoutAddress:$scope.checkoutAddress,
+            checkoutPhone:$scope.checkoutPhone,
+            checkoutEmail:$scope.checkoutEmail,
+            checkoutAddition:$scope.checkoutAddition,
+            checkoutShipName:$scope.checkoutShipName,
+            checkoutShipAddress:$scope.checkoutShipAddress,
+            checkoutShipPhone:$scope.checkoutShipPhone,
+            checkoutShipEmail:$scope.checkoutShipEmail
+        };
+        localStorage.setItem('checkoutInformation', JSON.stringify(checkoutInformation));
+        localStorage.setItem('checkoutSameShipping', $scope.checkoutSameShipping);
+    };
+    $scope.prevCheckout = function(){
+        $scope.checkoutStateIndex -= 1;
+        localStorage.setItem('checkoutStateIndex', $scope.checkoutStateIndex);
+        var checkoutInformation = {
+            checkoutName:$scope.checkoutName,
+            checkoutAddress:$scope.checkoutAddress,
+            checkoutPhone:$scope.checkoutPhone,
+            checkoutEmail:$scope.checkoutEmail,
+            checkoutAddition:$scope.checkoutAddition,
+            checkoutShipName:$scope.checkoutShipName,
+            checkoutShipAddress:$scope.checkoutShipAddress,
+            checkoutShipPhone:$scope.checkoutShipPhone,
+            checkoutShipEmail:$scope.checkoutShipEmail
+        };
+        localStorage.setItem('checkoutInformation', JSON.stringify(checkoutInformation));
+        localStorage.setItem('checkoutSameShipping', $scope.checkoutSameShipping);
+    };
+    
+    var checkoutInformation = localStorage.getItem('checkoutInformation');
+    if(checkoutInformation !== null){ 
+        checkoutInformation = JSON.parse(checkoutInformation);
+        for(var key in checkoutInformation){
+            if(checkoutInformation.hasOwnProperty(key)){
+                $scope[key] = checkoutInformation[key];
+            }
+        }
     }
+    
+    
+    $scope.checkoutShippingMethodName = {free:'Miễn phí', pay:'Dịch vụ giao nhanh', postbank:'Bưu điện', choviets:'Chợ Việts'};
+    $scope.checkoutPaymentMethodName = {payWhenDelivery:'Tôi sẽ trả khi nhận hàng', payPal:'PayPal', creditCard:'Credit Card'};
+    $scope.messageShippingMethod = {
+        free:'Tôi không phải mất phí vận chuyển nhưng nhận hàng lâu', 
+        pay:'Dùng dịch vụ Giao nhanh, tôi chỉ mất 20,000 nhưng nhận hàng rất nhanh chóng', 
+        postbank:'Dịch vụ của bưu điện có những ưu đãi riêng', 
+        choviets:'Chợ Việts là dịch vụ mới nhưng tốt nhất hiện nay'
+    };
+    
+    //if(typeof $scope.checkoutSameShipping === 'undefined'){ $scope.checkoutSameShipping = true; }
+    var checkoutSameShipping = localStorage.getItem('checkoutSameShipping');
+    if(checkoutSameShipping !== null){ 
+        $scope.checkoutSameShipping = checkoutSameShipping.indexOf('false') > 0 ? false : true; 
+    } else{
+        $scope.checkoutSameShipping = true;
+    }
+    if(typeof $scope.checkoutShippingOption === 'undefined'){ $scope.checkoutShippingOption = 'place'; }
+    if(typeof $scope.checkoutShippingMethod === 'undefined'){ $scope.checkoutShippingMethod = 'free'; }
+    if(typeof $scope.checkoutPaymentMethod === 'undefined'){ $scope.checkoutPaymentMethod = 'payWhenDelivery'; }
+    
+    
+    var checkShoppingCart = localStorage.getItem('shoppingCart');
+    if(checkShoppingCart !== null){ $rootScope.shoppingCart = JSON.parse(checkShoppingCart); }
     $rootScope.shoppingDiscount = 10;
     $scope.getTotalCart = function(){
         if(typeof $rootScope.shoppingCart === 'undefined'){ return 0; }
@@ -93,6 +134,9 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             });
         }
         $scope.shoppingTotal = shoppingTotal;
+        if(shoppingTotal > 0){
+            localStorage.setItem('shoppingCart', JSON.stringify($rootScope.shoppingCart));
+        }
         return shoppingTotal;
     };
     $scope.removeShoppingCart = function(index){
@@ -133,9 +177,16 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             shoppingCart[kioskFriendly] = shoppingCartTmp;
             $rootScope.shoppingCart = shoppingCart;
         }
-        console.log($rootScope.shoppingCart[kioskFriendly]);
+        //console.log($rootScope.shoppingCart[kioskFriendly]);
         localStorage.setItem('shoppingCart', JSON.stringify($rootScope.shoppingCart));
+        $location.path(kioskFriendly+'/gio-hang');
     };
+    $scope.newShoppingCart = function(){
+        $rootScope.shoppingCart[kioskFriendly] = [];
+        localStorage.setItem('shoppingCart', JSON.stringify($rootScope.shoppingCart));
+        $location.path(kioskFriendly);
+    }
+    
     $scope.getKioskInformation = function(){
         var commandOption = {
             'command':'get-information',
@@ -321,6 +372,7 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
         }
         $scope.quantityType[quantityType] = quantity;
     };
+    
     $scope.openQuickView = function (quickViewDetail) {
         var tabShowQuickViewSlide = {};
         var productSlide = quickViewDetail.product_slide;
