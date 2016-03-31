@@ -37,7 +37,7 @@ frontendApplication.config(function($routeProvider, $locationProvider, USER_ROLE
             authorizedRoles: [USER_ROLES.all]
         }
     })
-    .when('/:kiosk/mua-hang', {
+    .when('/:kiosk/dat-hang', {
         templateUrl : '/frontend/templates/pages/product/product.checkout.html',
         controller  : 'kioskController',
         title : mainTitle,

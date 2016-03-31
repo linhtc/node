@@ -185,6 +185,32 @@ function processServices(request, response){
                             });
                         }); break;
                     }
+                    case 'checkout':{
+                        var shoppingCart = requestData.shopping_cart;
+                        var checkoutInformation = requestData.checkout_information;
+                        var shopping_code = generateShoppingCode().toString().toUpperCase();
+                        var document = {
+                            checkout_kiosk:kioskFriendly,
+                            checkout_shopping_code:shopping_code,
+                            checkout_information:checkoutInformation,
+                            checout_shopping:shoppingCart,
+                            user_created:'System',
+                            time_created:new Date(),
+                            user_modified:null,
+                            time_modified:null,
+                            deleted:0
+                        };
+                        
+                        MongoClient.connect('mongodb://localhost:27017/cloudservices', function(err, db) {
+                            assert.equal(null, err);
+                            db.collection('cs_checkout').insertOne(document);
+                            db.close();
+                            response.writeHead(200, { 'Content-Type': 'application/json' });
+                            var result = {result:'OK', shopping_code:shopping_code};
+                            response.end(JSON.stringify(result));
+                            console.log(result);
+                        }); break;
+                    }
                     default:{ response.writeHead(200); response.end(JSON.stringify({message:'error'})); }
                 }
             }); break;
@@ -257,7 +283,7 @@ var getProductDetail = function(db, kioskFriendly, productFriendly, callback){ d
 var getSlideViaKiosk = function(db, kioskFriendly, callback){ db.collection('cs_slide').findOne({slide_kiosk:kioskFriendly}, {fields:{_id:0}}, function(err, document) { assert.equal(null, err); callback(document); }); };
 var getKioskInformation = function(db, kioskFriendly, callback){ db.collection('cs_kiosk').findOne({kiosk_friendly:kioskFriendly}, {fields:{_id:0}}, function(err, document) { assert.equal(null, err); callback(document); }); };
 var getProductList = function(db, kioskFriendly, callback){ 
-    var cursor = db.collection('cs_product').find( {product_kiosk:kioskFriendly}, {} );
+    var cursor = db.collection('cs_product').find( {product_kiosk:kioskFriendly}, {} ).sort({product_sort:1});
     var documents = new Array();
     cursor.each(function(err, document) { assert.equal(err, null); if (document !== null){ documents.push(document); } else { callback(documents); } }); 
 };
@@ -270,5 +296,15 @@ var getManufacturerList = function(db, kioskFriendly, callback){
     var cursor = db.collection('cs_manufacturer').find( {manufacturer_kiosk:kioskFriendly}, {} );
     var documents = new Array();
     cursor.each(function(err, document) { assert.equal(err, null); if (document !== null){ documents.push(document); } else { callback(documents); } }); 
+};
+
+var ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+var ID_LENGTH = 6;
+var generateShoppingCode = function() {
+    var rtn = '';
+    for (var i = 0; i < ID_LENGTH; i++) {
+        rtn += ALPHABET.charAt(Math.floor(Math.random() * ALPHABET.length));
+    }
+    return rtn;
 };
 

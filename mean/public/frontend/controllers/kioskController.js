@@ -26,42 +26,22 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
     $scope.quickViewProduct = {};
     $scope.attributeCart = {};
     var shoppingCart = {};
-    shoppingCart[kioskFriendly] = [
-        /*
-        {
-            name:'Giày thể thao A1',
-            friendly:'giay-the-thao-a1',
-            src: '/frontend/templates/assets/images/kiosk/shop-the-thao/sanpham1.jpg',
-            quantity:3,
-            price:3,
-            attributes:'Xanh, M'
-        }
-        */
-    ];
+    shoppingCart[kioskFriendly] = [];
     
     $scope.shoppingFee = 10000;
+    $scope.shoppingCode = null;
     $scope.checkoutState = [ 'Thông tin của tôi', 'Vận chuyển', 'Thanh toán', 'Hoàn thành' ];
     var checkoutStateIndex = localStorage.getItem('checkoutStateIndex');
     if(checkoutStateIndex !== null){ $scope.checkoutStateIndex = parseInt(checkoutStateIndex); } else{ $scope.checkoutStateIndex = 0; }
     $scope.nextCheckout = function(){
         $scope.checkoutStateIndex += 1;
-        localStorage.setItem('checkoutStateIndex', $scope.checkoutStateIndex);
-        var checkoutInformation = {
-            checkoutName:$scope.checkoutName,
-            checkoutAddress:$scope.checkoutAddress,
-            checkoutPhone:$scope.checkoutPhone,
-            checkoutEmail:$scope.checkoutEmail,
-            checkoutAddition:$scope.checkoutAddition,
-            checkoutShipName:$scope.checkoutShipName,
-            checkoutShipAddress:$scope.checkoutShipAddress,
-            checkoutShipPhone:$scope.checkoutShipPhone,
-            checkoutShipEmail:$scope.checkoutShipEmail
-        };
-        localStorage.setItem('checkoutInformation', JSON.stringify(checkoutInformation));
-        localStorage.setItem('checkoutSameShipping', $scope.checkoutSameShipping);
+        $scope.storageCheckoutInformation();
     };
     $scope.prevCheckout = function(){
         $scope.checkoutStateIndex -= 1;
+        //$scope.storageCheckoutInformation();
+    };
+    $scope.storageCheckoutInformation = function(){
         localStorage.setItem('checkoutStateIndex', $scope.checkoutStateIndex);
         var checkoutInformation = {
             checkoutName:$scope.checkoutName,
@@ -72,12 +52,43 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             checkoutShipName:$scope.checkoutShipName,
             checkoutShipAddress:$scope.checkoutShipAddress,
             checkoutShipPhone:$scope.checkoutShipPhone,
-            checkoutShipEmail:$scope.checkoutShipEmail
+            checkoutShipEmail:$scope.checkoutShipEmail,
+            checkoutShippingOption:$scope.checkoutShippingOption,
+            checkoutShippingMethod:$scope.checkoutShippingMethod,
+            checkoutPaymentMethod:$scope.checkoutPaymentMethod
         };
         localStorage.setItem('checkoutInformation', JSON.stringify(checkoutInformation));
         localStorage.setItem('checkoutSameShipping', $scope.checkoutSameShipping);
     };
+    $scope.submitCheckout = function(){
+        var shoppingCart = localStorage.getItem('shoppingCart');
+        var checkoutInformation = localStorage.getItem('checkoutInformation');
+        shoppingCart = JSON.parse(shoppingCart);
+        checkoutInformation = JSON.parse(checkoutInformation);
+        var commandOption = {
+            command:'checkout',
+            kiosk_friendly:kioskFriendly,
+            shopping_cart:shoppingCart,
+            checkout_information:checkoutInformation
+        };
+        $http.post('product', commandOption, {responseType: "text"}).then(function(response){
+            if(response.data === null){ console.log('null'); return false; }
+            var responseData = response.data;
+            console.log(responseData);
+            $scope.shoppingCode = responseData.shopping_code;
+            localStorage.setItem('shoppingCode', responseData.shopping_code);
+            
+            $rootScope.shoppingCart[kioskFriendly] = [];
+            localStorage.removeItem('shoppingCart');
+            localStorage.removeItem('checkoutInformation');
+            localStorage.removeItem('checkoutStateIndex');
+        });
+    };
     
+    var shoppingCode = localStorage.getItem('shoppingCode');
+    if(shoppingCode !== null){ 
+        $scope.shoppingCode = shoppingCode;
+    }
     var checkoutInformation = localStorage.getItem('checkoutInformation');
     if(checkoutInformation !== null){ 
         checkoutInformation = JSON.parse(checkoutInformation);
@@ -100,8 +111,8 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
     
     //if(typeof $scope.checkoutSameShipping === 'undefined'){ $scope.checkoutSameShipping = true; }
     var checkoutSameShipping = localStorage.getItem('checkoutSameShipping');
-    if(checkoutSameShipping !== null){ 
-        $scope.checkoutSameShipping = checkoutSameShipping.indexOf('false') > 0 ? false : true; 
+    if(checkoutSameShipping !== null){
+        $scope.checkoutSameShipping = checkoutSameShipping.indexOf('false') >= 0 ? false : true; 
     } else{
         $scope.checkoutSameShipping = true;
     }
@@ -143,6 +154,11 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
         $rootScope.shoppingCart[kioskFriendly].splice(index, 1);   
     };
     $scope.addShoppingCart = function(product){
+        // remove shopping code
+        localStorage.removeItem('shoppingCode');
+        $scope.shoppingCode = null;
+        $scope.checkoutStateIndex = 0;
+        
         //console.log(product);
         //console.log($scope.quantityType.detail);
         var quantity = $scope.quantityType.detail;
@@ -215,6 +231,8 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
             $rootScope.kioskEmail = kioskEmail;
             if(pathUrl.indexOf('gio-hang') >= 0){
                 $rootScope.page.setTitle('Giỏ hàng');
+            } else if(pathUrl.indexOf('dat-hang') >= 0){
+                $rootScope.page.setTitle('Đặt hàng');
             } else{
                 $rootScope.page.setTitle(kioskName);
             }
@@ -408,6 +426,8 @@ frontendApplication.controller('kioskController', function($rootScope, $scope, $
         $scope.getProductDetail();
         $scope.getProductRelated();
     } else if(pathUrl.indexOf('gio-hang') < 0){
+        $scope.getProductList();
+    }  else if(pathUrl.indexOf('dat-hang') < 0){
         $scope.getProductList();
     } else{
         
