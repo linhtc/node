@@ -4,6 +4,7 @@ var path = require('path');
 var url  = require('url');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
+var nodemailer = require('nodemailer');
 var basePath = '/var/www/html/node/wd/';
 //var basePath = '/home/gdsuser/wd-rma/';
 
@@ -91,6 +92,15 @@ function processServices(request, response){
                 }
             }); break;
         }
+        case '/test':{
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            var requestDataTmp = "";
+            request.on('data', function (chunk){ requestDataTmp += chunk; });
+            request.on('end', function () {
+                sendEmail();
+                response.end("OK");
+            }); break;
+        }
         default:{
             fs.readFile(basePath+'public'+'/backend.html', function(error, content){
                 if(error){
@@ -121,7 +131,51 @@ var generateMenuClass = function(menuList, menuDocuments, groupControl, callback
     console.log(menuDocuments);
     callback();
 };
-
-
 var getSlideViaKiosk = function(db, kioskFriendly, callback){ db.collection('cs_slide').findOne({slide_kiosk:kioskFriendly}, {fields:{_id:0}}, function(err, document) { assert.equal(null, err); callback(document); }); };
 
+var sendEmail = function(){
+    console.log('---');
+    // create reusable transporter object using the default SMTP transport
+    var smtpConfig = {
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true, // use SSL 
+        auth: {
+            user: 'tplus.tcl2@gmail.com',
+            pass: 'Thienduonghoamong0913197650'
+        }
+    };
+    var transporter = nodemailer.createTransport(smtpConfig);
+
+
+    // setup e-mail data with unicode symbols
+    var path = basePath+'public/backend/templates/pages/nodemailer/gmail.html';
+    console.log(path);
+    var mailOptions = {
+        from: '"Tplus2" <tplus.tcl2@gmail.com>', // sender address
+        to: '"Linh Tran" <linhtc@greystonevn.com>', // list of receivers
+        bcc:"tplus.tcl2@gmail.com",
+        subject: 'Hello', // Subject line
+        text: 'Hello world ', // plaintext body
+        html: {path:path} // html body
+    };
+    
+    /*
+    // verify connection configuration 
+    transporter.verify(function(error, success) {
+       if (error) {
+            console.log(error);
+       } else {
+            console.log('Server is ready to take our messages');
+       }
+    });
+    */
+    // send mail with defined transport object
+    transporter.sendMail(mailOptions, function(error, info){
+        if(error){
+            console.log('Error...');
+            return console.log(error);
+        }
+        console.log('Message sent: ' + info.response);
+    });
+};
