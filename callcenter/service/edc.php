@@ -8,7 +8,7 @@ $decrypt = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $secretKey, base64_decode(urldeco
 
 echo "\n<br />Greeting is: "; print_r($something); echo "\n<br />";
 echo "\n<br />Encrypt is: "; print_r($encrypt); echo "\n<br />";
-echo "\n<br />Encrypt is: "; print_r($decrypt); echo "\n<br />";
+echo "\n<br />Decrypt is: "; print_r($decrypt); echo "\n<br />";
 exit;
 
 ?>
